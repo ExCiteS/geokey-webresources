@@ -1,0 +1,7 @@
+{% if request.resolver_match.url_name != 'index' %}
+    <ol class="breadcrumb">
+        <li>
+            <a href="{% url 'geokey_webresources:index' %}">Home</a>
+        </li>
+    </ol>
+{% endif %}
