@@ -4,8 +4,8 @@ from django.views.generic import TemplateView
 
 from braces.views import LoginRequiredMixin
 
-from geokey.core.decorators import handle_exceptions_for_admin
 from geokey.projects.models import Project
+from geokey.projects.views import ProjectContext
 
 from .helpers.context_helpers import does_not_exist_msg
 from .models import WebResource
@@ -26,7 +26,7 @@ class IndexPage(LoginRequiredMixin, TemplateView):
         Returns
         -------
         dict
-            context
+            Context.
         """
         projects = Project.objects.filter(admins=self.request.user)
 
@@ -37,48 +37,46 @@ class IndexPage(LoginRequiredMixin, TemplateView):
         )
 
 
-class AllWebResourcesPage(LoginRequiredMixin, TemplateView):
+class AllWebResourcesPage(LoginRequiredMixin, ProjectContext, TemplateView):
     """All web resources page."""
 
     template_name = 'wr_all_webresources.html'
 
 
-class AddWebResourcePage(LoginRequiredMixin, TemplateView):
+class AddWebResourcePage(LoginRequiredMixin, ProjectContext, TemplateView):
     """Add new web resource page."""
 
     template_name = 'wr_add_webresource.html'
 
 
-class WebResourceMixin(LoginRequiredMixin, TemplateView):
-    """Get web resource (and project) mixin."""
+class WebResourceContext(LoginRequiredMixin, ProjectContext, TemplateView):
+    """Get web resource mixin."""
 
-    @handle_exceptions_for_admin
     def get_context_data(self, project_id, webresource_id, *args, **kwargs):
         """
         GET method for the template.
 
         Return the context to render the view. Overwrite the method by adding
-        a project and a web resource to the context.
+        a web resource to the context.
 
         Returns
         -------
         dict
-            context
+            Context.
         """
-        self.project = Project.objects.as_admin(self.request.user, project_id)
+        context = super(WebResourceContext, self).get_context_data(
+            project_id,
+            *args,
+            **kwargs
+        )
 
         try:
-            self.webresource = WebResource.objects.get(
+            context['webresource'] = WebResource.objects.get(
                 pk=webresource_id,
-                project=self.project
+                project=context.get('project')
             )
 
-            return super(WebResourceMixin, self).get_context_data(
-                project=self.project,
-                webresource=self.webresource,
-                *args,
-                **kwargs
-            )
+            return context
         except WebResource.DoesNotExist:
             return {
                 'error': 'Not found.',
@@ -86,13 +84,13 @@ class WebResourceMixin(LoginRequiredMixin, TemplateView):
             }
 
 
-class SingleWebResourcePage(WebResourceMixin):
+class SingleWebResourcePage(WebResourceContext):
     """Single web resource page."""
 
     template_name = 'wr_single_webresource.html'
 
 
-class RemoveWebResourcePage(WebResourceMixin):
+class RemoveWebResourcePage(WebResourceContext):
     """Remove web resource page."""
 
     template_name = 'base.html'

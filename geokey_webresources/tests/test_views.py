@@ -26,6 +26,11 @@ from ..views import (
 )
 
 
+no_rights_to_access_msg = 'You are not member of the administrators group ' \
+                          'of this project and therefore not allowed to ' \
+                          'alter the settings of the project'
+
+
 class IndexPageTest(TestCase):
     """Test index page."""
 
@@ -163,8 +168,8 @@ class AllWebResourcesPageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
-                'error': 'Not found.',
-                'error_description': does_not_exist_msg('Project')
+                'error': 'Permission denied.',
+                'error_description': no_rights_to_access_msg
             }
         )
 
@@ -310,8 +315,8 @@ class AddWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
-                'error': 'Not found.',
-                'error_description': does_not_exist_msg('Project')
+                'error': 'Permission denied.',
+                'error_description': no_rights_to_access_msg
             }
         )
 
@@ -435,7 +440,7 @@ class SingleWebResourcePageTest(TestCase):
                 'user': self.request.user,
                 'messages': get_messages(self.request),
                 'error': 'Not found.',
-                'error_description': does_not_exist_msg('Project')
+                'error_description': does_not_exist_msg('Web resource')
             }
         )
 
@@ -467,7 +472,7 @@ class SingleWebResourcePageTest(TestCase):
                 'user': self.request.user,
                 'messages': get_messages(self.request),
                 'error': 'Not found.',
-                'error_description': does_not_exist_msg('Project')
+                'error_description': does_not_exist_msg('Web resource')
             }
         )
 
@@ -596,7 +601,7 @@ class RemoveWebResourcePageTest(TestCase):
                 'user': self.request.user,
                 'messages': get_messages(self.request),
                 'error': 'Not found.',
-                'error_description': does_not_exist_msg('Project')
+                'error_description': does_not_exist_msg('Web resource')
             }
         )
 
@@ -629,7 +634,7 @@ class RemoveWebResourcePageTest(TestCase):
                 'user': self.request.user,
                 'messages': get_messages(self.request),
                 'error': 'Not found.',
-                'error_description': does_not_exist_msg('Project')
+                'error_description': does_not_exist_msg('Web resource')
             }
         )
 
