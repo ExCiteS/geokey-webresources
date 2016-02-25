@@ -10,7 +10,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.shortcuts import get_current_site
 
 from geokey import version
-from geokey.core.tests.helpers import render_helpers
+from geokey.core.tests.helpers import render_helpers, image_helpers
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.tests.model_factories import ProjectFactory
 
@@ -253,6 +253,15 @@ class AddWebResourcePageTest(TestCase):
             add_contributors=[self.contributor]
         )
 
+        self.data = {
+            'name': 'Test Web Resource',
+            'description': '',
+            'data_format': 'GeoJSON',
+            'url': 'http://big-data.org.uk/test.json',
+            'colour': '#000000',
+            'symbol': image_helpers.get_image(file_name='test_wr_symbol.png')
+        }
+
         setattr(self.request, 'session', 'session')
         messages = FallbackStorage(self.request)
         setattr(self.request, '_messages', messages)
@@ -387,6 +396,51 @@ class AddWebResourcePageTest(TestCase):
             rendered
         )
 
+    def test_post_with_anonymous(self):
+        """
+        Test POST with with anonymous.
+
+        It should redirect to login page.
+        """
+        self.request.user = AnonymousUser()
+        self.request.method = 'POST'
+        self.request.POST = self.data
+        response = self.view(self.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/account/login/', response['location'])
+
+    def test_post_when_project_is_locked(self):
+        """
+        Test POST with with admin, when project is locked.
+
+        It should inform user that the project is locked and redirect to add
+        web resource page.
+        """
+        self.project.islocked = True
+        self.project.save()
+
+        self.request.user = self.admin
+        self.request.method = 'POST'
+        self.request.POST = self.data
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:add_webresource',
+                kwargs={
+                    'project_id': self.project.id
+                }
+            ),
+            response['location']
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
 
 class SingleWebResourcePageTest(TestCase):
     """Test single web resource page."""
@@ -404,6 +458,15 @@ class SingleWebResourcePageTest(TestCase):
             add_contributors=[self.contributor]
         )
         self.webresource = WebResourceFactory.create(project=self.project)
+
+        self.data = {
+            'name': self.webresource.name,
+            'description': self.webresource.description,
+            'data_format': 'GeoJSON',
+            'url': 'http://big-data.org.uk/test.json',
+            'colour': '#000000',
+            'symbol': image_helpers.get_image(file_name='test_wr_symbol.png')
+        }
 
         setattr(self.request, 'session', 'session')
         messages = FallbackStorage(self.request)
@@ -552,6 +615,58 @@ class SingleWebResourcePageTest(TestCase):
             render_helpers.remove_csrf(response.content.decode('utf-8')),
             rendered
         )
+
+    def test_post_with_anonymous(self):
+        """
+        Test POST with with anonymous.
+
+        It should redirect to login page.
+        """
+        self.request.user = AnonymousUser()
+        self.request.method = 'POST'
+        self.request.POST = self.data
+        response = self.view(self.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/account/login/', response['location'])
+
+    def test_post_when_project_is_locked(self):
+        """
+        Test POST with with admin, when project is locked.
+
+        It should inform user that the project is locked and redirect to the
+        same web resource.
+        """
+        self.project.islocked = True
+        self.project.save()
+
+        self.request.user = self.admin
+        self.request.method = 'POST'
+        self.request.POST = self.data
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:single_webresource',
+                kwargs={
+                    'project_id': self.project.id,
+                    'webresource_id': self.webresource.id
+                }
+            ),
+            response['location']
+        )
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertEqual(reference.symbol, self.webresource.symbol)
 
 
 class RemoveWebResourcePageTest(TestCase):
