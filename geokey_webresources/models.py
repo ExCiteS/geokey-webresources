@@ -46,10 +46,6 @@ class WebResource(StatusModel, TimeStampedModel):
     def delete(self):
         """
         Delete the web resource by setting its status to `deleted`.
-
-        Notes
-        -----
-        It also deletes all contributions of that category.
         """
         self.status = self.STATUS.deleted
         self.save()
