@@ -6,9 +6,9 @@
 
         {% if request.resolver_match.url_name == 'all_webresources' %}
             <li class="active">Project web resources</li>
-        {% else %}
+        {% elif project %}
              <li>
-                <a href="{% url 'geokey_webresources:all_webresources' 1 %}">Project web resources</a>
+                <a href="{% url 'geokey_webresources:all_webresources' project.id %}">Project web resources</a>
             </li>
         {% endif %}
 
