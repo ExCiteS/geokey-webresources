@@ -1,17 +1,33 @@
 """All tests for views."""
 
+from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.test import TestCase
 from django.template.loader import render_to_string
+from django.contrib.messages import get_messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.shortcuts import get_current_site
 
 from geokey import version
+from geokey.core.tests.helpers import render_helpers
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.tests.model_factories import ProjectFactory
 
-from ..views import IndexPage
+from .model_factories import WebResourceFactory
+from ..models import WebResource
+from ..views import (
+    IndexPage,
+    AllWebResourcesPage,
+    AddWebResourcePage,
+    SingleWebResourcePage,
+    RemoveWebResourcePage
+)
+
+
+def does_not_exist_msg(title):
+    """Make the message when something does not exist."""
+    return '%s matching query does not exist.' % title
 
 
 class IndexPageTest(TestCase):
@@ -58,12 +74,658 @@ class IndexPageTest(TestCase):
         rendered = render_to_string(
             'wr_index.html',
             {
-                'user': user,
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'GEOKEY_VERSION': version.get_version(),
+                'user': self.request.user,
+                'messages': get_messages(self.request),
                 'projects': projects
             }
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content.decode('utf-8'), rendered)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+
+class AllWebResourcesPageTest(TestCase):
+    """Test all web resources page."""
+
+    def setUp(self):
+        """Set up test."""
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+        self.view = AllWebResourcesPage.as_view()
+
+        self.user = UserFactory.create()
+        self.admin = UserFactory.create()
+        self.contributor = UserFactory.create()
+        self.project = ProjectFactory.create(
+            add_admins=[self.admin],
+            add_contributors=[self.contributor]
+        )
+
+        setattr(self.request, 'session', 'session')
+        messages = FallbackStorage(self.request)
+        setattr(self.request, '_messages', messages)
+
+    def test_get_with_anonymous(self):
+        """
+        Test get with with anonymous.
+
+        It should redirect to login page.
+        """
+        self.request.user = AnonymousUser()
+        response = self.view(self.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/account/login/', response['location'])
+
+    def test_get_with_user(self):
+        """
+        Test get with with user.
+
+        It should not allow to access the page, when user is not an
+        administrator.
+        """
+        self.request.user = self.user
+        response = self.view(self.request, project_id=self.project.id).render()
+
+        rendered = render_to_string(
+            'wr_all_webresources.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_with_contributor(self):
+        """
+        Test get with with contributor.
+
+        It should not allow to access the page, when user is not an
+        administrator.
+        """
+        self.request.user = self.contributor
+        response = self.view(self.request, project_id=self.project.id).render()
+
+        rendered = render_to_string(
+            'wr_all_webresources.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_with_admin(self):
+        """
+        Test get with with admin.
+
+        It should render the page with a project.
+        """
+        self.request.user = self.admin
+        response = self.view(self.request, project_id=self.project.id).render()
+
+        rendered = render_to_string(
+            'wr_all_webresources.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'project': self.project
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_non_existing(self):
+        """
+        Test get with with admin, when project does not exist.
+
+        It should inform user that project does not exist.
+        """
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.project.id + 123
+        ).render()
+
+        rendered = render_to_string(
+            'wr_all_webresources.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+
+class AddWebResourcePageTest(TestCase):
+    """Test add web resource page."""
+
+    def setUp(self):
+        """Set up test."""
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+        self.view = AddWebResourcePage.as_view()
+
+        self.user = UserFactory.create()
+        self.admin = UserFactory.create()
+        self.contributor = UserFactory.create()
+        self.project = ProjectFactory.create(
+            add_admins=[self.admin],
+            add_contributors=[self.contributor]
+        )
+
+        setattr(self.request, 'session', 'session')
+        messages = FallbackStorage(self.request)
+        setattr(self.request, '_messages', messages)
+
+    def test_get_with_anonymous(self):
+        """
+        Test get with with anonymous.
+
+        It should redirect to login page.
+        """
+        self.request.user = AnonymousUser()
+        response = self.view(self.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/account/login/', response['location'])
+
+    def test_get_with_user(self):
+        """
+        Test get with with user.
+
+        It should not allow to access the page, when user is not an
+        administrator.
+        """
+        self.request.user = self.user
+        response = self.view(self.request, project_id=self.project.id).render()
+
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
+    def test_get_with_contributor(self):
+        """
+        Test get with with contributor.
+
+        It should not allow to access the page, when user is not an
+        administrator.
+        """
+        self.request.user = self.contributor
+        response = self.view(self.request, project_id=self.project.id).render()
+
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
+    def test_get_with_admin(self):
+        """
+        Test get with with admin.
+
+        It should render the page with a project.
+        """
+        self.request.user = self.admin
+        response = self.view(self.request, project_id=self.project.id).render()
+
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'project': self.project
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_non_existing(self):
+        """
+        Test get with with admin, when project does not exist.
+
+        It should inform user that project does not exist.
+        """
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.project.id + 123
+        ).render()
+
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+
+class SingleWebResourcePageTest(TestCase):
+    """Test single web resource page."""
+
+    def setUp(self):
+        """Set up test."""
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+        self.view = SingleWebResourcePage.as_view()
+
+        self.user = UserFactory.create()
+        self.admin = UserFactory.create()
+        self.contributor = UserFactory.create()
+        self.project = ProjectFactory.create(
+            add_admins=[self.admin],
+            add_contributors=[self.contributor]
+        )
+        self.webresource = WebResourceFactory.create(project=self.project)
+
+        setattr(self.request, 'session', 'session')
+        messages = FallbackStorage(self.request)
+        setattr(self.request, '_messages', messages)
+
+    def test_get_with_anonymous(self):
+        """
+        Test get with with anonymous.
+
+        It should redirect to login page.
+        """
+        self.request.user = AnonymousUser()
+        response = self.view(self.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/account/login/', response['location'])
+
+    def test_get_with_user(self):
+        """
+        Test get with with user.
+
+        It should not allow to access the page, when user is not an
+        administrator.
+        """
+        self.request.user = self.user
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_with_contributor(self):
+        """
+        Test get with with contributor.
+
+        It should not allow to access the page, when user is not an
+        administrator.
+        """
+        self.request.user = self.contributor
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_with_admin(self):
+        """
+        Test get with with admin.
+
+        It should render the page with a project and web resource.
+        """
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'project': self.project,
+                'webresource': self.webresource
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_non_existing(self):
+        """
+        Test get with with admin, when web resource does not exist.
+
+        It should inform user that web resource does not exist.
+        """
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id + 123
+        ).render()
+
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Web resource')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+
+class RemoveWebResourcePageTest(TestCase):
+    """Test remove web resource page."""
+
+    def setUp(self):
+        """Set up test."""
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+        self.view = RemoveWebResourcePage.as_view()
+
+        self.user = UserFactory.create()
+        self.admin = UserFactory.create()
+        self.contributor = UserFactory.create()
+        self.project = ProjectFactory.create(
+            add_admins=[self.admin],
+            add_contributors=[self.contributor]
+        )
+        self.webresource = WebResourceFactory.create(project=self.project)
+
+        setattr(self.request, 'session', 'session')
+        messages = FallbackStorage(self.request)
+        setattr(self.request, '_messages', messages)
+
+    def test_get_with_anonymous(self):
+        """
+        Test get with with anonymous.
+
+        It should redirect to login page.
+        """
+        self.request.user = AnonymousUser()
+        response = self.view(self.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/admin/account/login/', response['location'])
+
+    def test_get_with_user(self):
+        """
+        Test get with with user.
+
+        It should not allow to access the page, when user is not an
+        administrator.
+        """
+        self.request.user = self.user
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        rendered = render_to_string(
+            'base.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 1)
+
+    def test_get_with_contributor(self):
+        """
+        Test get with with contributor.
+
+        It should not allow to access the page, when user is not an
+        administrator.
+        """
+        self.request.user = self.contributor
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        rendered = render_to_string(
+            'base.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 1)
+
+    def test_get_with_admin(self):
+        """
+        Test get with with admin.
+
+        It should remove web resource and redirect to all web resources of a
+        project.
+        """
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:all_webresources',
+                kwargs={'project_id': self.project.id}
+            ),
+            response['location']
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
+    def test_get_non_existing(self):
+        """
+        Test get with with admin, when web resource does not exist.
+
+        It should inform user that web resource does not exist.
+        """
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id + 123
+        ).render()
+
+        rendered = render_to_string(
+            'base.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Web resource')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 1)
+
+    def test_get_when_project_is_locked(self):
+        """
+        Test get with with admin, when project is locked.
+
+        It should remove web resource and redirect to all web resources of a
+        project.
+        """
+        self.project.islocked = True
+        self.project.save()
+
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:single_webresource',
+                kwargs={
+                    'project_id': self.project.id,
+                    'webresource_id': self.webresource.id
+                }
+            ),
+            response['location']
+        )
+        self.assertEqual(WebResource.objects.count(), 1)
