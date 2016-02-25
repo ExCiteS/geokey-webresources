@@ -10,6 +10,7 @@ from geokey.projects.models import Project
 from geokey.projects.views import ProjectContext
 
 from .helpers.context_helpers import does_not_exist_msg
+from .base import FORMAT
 from .models import WebResource
 
 
@@ -50,6 +51,24 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, TemplateView):
 
     template_name = 'wr_add_webresource.html'
 
+    def get_context_data(self, *args, **kwargs):
+        """
+        GET method for the template.
+
+        Return the context to render the view. Overwrite the method by adding
+        available data formats to the context.
+
+        Returns
+        -------
+        dict
+            Context.
+        """
+        return super(AddWebResourcePage, self).get_context_data(
+            data_formats=FORMAT,
+            *args,
+            **kwargs
+        )
+
 
 class WebResourceContext(LoginRequiredMixin, ProjectContext, TemplateView):
     """Get web resource mixin."""
@@ -59,7 +78,7 @@ class WebResourceContext(LoginRequiredMixin, ProjectContext, TemplateView):
         GET method for the template.
 
         Return the context to render the view. Overwrite the method by adding
-        a web resource to the context.
+        a web resource and available data formats to the context.
 
         Returns
         -------
@@ -71,6 +90,8 @@ class WebResourceContext(LoginRequiredMixin, ProjectContext, TemplateView):
             *args,
             **kwargs
         )
+
+        context['data_formats'] = FORMAT
 
         try:
             context['webresource'] = WebResource.objects.get(

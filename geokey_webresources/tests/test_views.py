@@ -16,6 +16,7 @@ from geokey.projects.tests.model_factories import ProjectFactory
 
 from .model_factories import WebResourceFactory
 from ..helpers.context_helpers import does_not_exist_msg
+from ..base import FORMAT
 from ..models import WebResource
 from ..views import (
     IndexPage,
@@ -343,6 +344,7 @@ class AddWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'data_formats': FORMAT,
                 'project': self.project
             }
         )
@@ -502,6 +504,7 @@ class SingleWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'data_formats': FORMAT,
                 'project': self.project,
                 'webresource': self.webresource
             }
