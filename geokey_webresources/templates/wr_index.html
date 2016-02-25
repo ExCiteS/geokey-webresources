@@ -16,7 +16,7 @@
                     <li>
                         <h3>
                             {% if project.islocked %}<span class="glyphicon glyphicon-lock text-warning" aria-hidden="true"></span>{% endif %}
-                            <a href="#">{{ project.name }}</a>
+                            <a href="{% url 'geokey_webresources:all_webresources' project.id %}">{{ project.name }}</a>
                         </h3>
 
                         {% project_attributes project %}

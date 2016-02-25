@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block bodydata %}
+data-project-id="{{ project.id }}"
+data-project-locked="{{ project.islocked }}"
+{% endblock %}
+
+{% block title %} | Project: {{ project.name }} - Web resources{% endblock %}
+
+{% block main %}
+{% include 'snippets/wr_header.html' %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="header">
+                {% if project.islocked %}<span class="glyphicon glyphicon-lock text-warning" aria-hidden="true"></span>{% endif %}
+                <span>Web resources of {{ project.name }}</span>
+
+                {% if project.webresources.all and not project.islocked %}
+                    <a role="button" href="{% url 'geokey_webresources:webresource_add' project.id %}" class="btn btn-sm btn-success pull-right">
+                        <span class="glyphicon glyphicon-plus"></span>
+                        <span>Add new web resource</span>
+                    </a>
+                {% endif %}
+            </h3>
+
+            {% for webresource in project.webresources.all %}
+                {% if forloop.first %}
+                    <ul id="sortable" class="list-unstyled overview-list">
+                {% endif %}
+
+                <li class="sort-item" data-item-id="{{ webresource.id }}">
+                    <h4>
+                        <small><span class="glyphicon glyphicon-sort"></span></small>
+                        {% if project.islocked %}<span class="glyphicon glyphicon-lock text-warning" aria-hidden="true"></span>{% endif %}
+                        <a href="{% url 'geokey_webresources:single_webresource' project.id webresource.id %}">{{ webresource.name }}</a>
+                        {% if webresource.status == 'inactive' %}<small><span class="label label-default">Inactive</span></small>{% endif %}
+                    </h4>
+
+                    {% if webresource.description %}<p>{{ webresource.description }}</p>{% endif %}
+                </li>
+
+                {% if forloop.last %}
+                    </ul>
+                {% endif %}
+            {% empty %}
+                <div class="well empty-list">
+                    <p class="lead">We couldn't find any web resources for this project.</p>
+
+                    {% if project.islocked %}
+                        <p>Unfortunately, you cannot add new web resources when the project is locked.</p>
+                    {% else %}
+                        <a href="{% url 'geokey_webresources:webresource_add' project.id %}" class="btn btn-success btn-lg">Add new web resource</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block libraries %}
+<script src="/static/lib/jquery/jquery-ui.min.js"></script>
+
+<script src="/static/js/admin.ui.sort.js"></script>
+<script src="/static/js/admin.control.ajax.js"></script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block bodydata %}
+data-project-id="{{ project.id }}"
+data-project-locked="{{ project.islocked }}"
+data-webresource-id="{{ webresource.id }}"
+{% endblock %}
+
+{% block title %} | Project: {{ project.name }} - Web resource: {{ webresource.name }}{% endblock %}
+
+{% block main %}
+{% include 'snippets/wr_header.html' %}
+
+<div class="container">
+    <div class="row">
+        <form role="form" class="col-md-8 col-md-offset-2" method="POST" action="{% url 'geokey_webresources:single_webresource' project.id webresource.id %}" novalidate>
+            {% csrf_token %}
+
+            <h3 class="header">
+                {% if project.islocked %}<span class="glyphicon glyphicon-lock text-warning" aria-hidden="true"></span>{% endif %}
+                <span>Web resource of {{ project.name }}</span>
+            </h3>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block libraries %}
+<script src="/static/js/admin.ui.forms.validate.js"></script>
+{% endblock %}

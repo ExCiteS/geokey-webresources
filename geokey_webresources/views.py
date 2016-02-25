@@ -32,3 +32,27 @@ class IndexPage(LoginRequiredMixin, TemplateView):
             *args,
             **kwargs
         )
+
+
+class AllWebResourcesPage(LoginRequiredMixin, TemplateView):
+    """All web resources page."""
+
+    template_name = 'wr_all_webresources.html'
+
+
+class AddWebResourcePage(LoginRequiredMixin, TemplateView):
+    """Add new web resource page."""
+
+    template_name = 'wr_add_webresource.html'
+
+
+class SingleWebResourcePage(LoginRequiredMixin, TemplateView):
+    """Single web resource page."""
+
+    template_name = 'wr_single_webresource.html'
+
+
+class RemoveWebResourcePage(LoginRequiredMixin, TemplateView):
+    """Remove web resource page."""
+
+    template_name = 'base.html'
