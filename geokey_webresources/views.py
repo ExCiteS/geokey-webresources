@@ -28,8 +28,7 @@ class IndexPage(LoginRequiredMixin, TemplateView):
         dict
             context
         """
-        projects = Project.objects.get_list(self.request.user)
-        projects = projects.filter(admins=self.request.user)
+        projects = Project.objects.filter(admins=self.request.user)
 
         return super(IndexPage, self).get_context_data(
             projects=projects,
