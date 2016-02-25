@@ -1,6 +1,8 @@
 """All views for extension."""
 
 from django.views.generic import TemplateView
+from django.shortcuts import redirect
+from django.contrib import messages
 
 from braces.views import LoginRequiredMixin
 
@@ -94,3 +96,52 @@ class RemoveWebResourcePage(WebResourceContext):
     """Remove web resource page."""
 
     template_name = 'base.html'
+
+    def get(self, request, project_id, webresource_id):
+        """
+        GET method for removing web resource.
+
+        Parameter
+        ---------
+        request : django.http.HttpRequest
+            Object representing the request.
+        project_id : int
+            Identifies the project in the database.
+        webresource_id : int
+            Identifies the web resource in the database.
+
+        Returns
+        -------
+        django.http.HttpResponseRedirect
+            Redirects to all web resources if web resource is removed, single
+            web resource page if project is locked.
+        django.http.HttpResponse
+            Rendered template if project or web resource does not exist.
+        """
+        context = self.get_context_data(project_id, webresource_id)
+        webresource = context.get('webresource')
+
+        if webresource:
+            if webresource.project.islocked:
+                messages.error(
+                    self.request,
+                    'The project is locked. Web resource cannot be removed.'
+                )
+                return redirect(
+                    'geokey_webresources:single_webresource',
+                    project_id=project_id,
+                    webresource_id=webresource_id
+                )
+            else:
+                webresource.delete()
+
+                messages.success(
+                    self.request,
+                    'The web resource has been removed.'
+                )
+                return redirect(
+                    'geokey_webresources:all_webresources',
+                    project_id=project_id
+                )
+
+        return self.render_to_response(context)
