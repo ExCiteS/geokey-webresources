@@ -47,7 +47,7 @@ class IndexPageTest(TestCase):
 
     def test_get_with_anonymous(self):
         """
-        Test get with with anonymous.
+        Test GET with with anonymous.
 
         It should redirect to login page.
         """
@@ -59,7 +59,7 @@ class IndexPageTest(TestCase):
 
     def test_get_with_user(self):
         """
-        Test get with with user.
+        Test GET with with user.
 
         It should render the page with all projects, where user is an
         administrator.
@@ -114,7 +114,7 @@ class AllWebResourcesPageTest(TestCase):
 
     def test_get_with_anonymous(self):
         """
-        Test get with with anonymous.
+        Test GET with with anonymous.
 
         It should redirect to login page.
         """
@@ -126,7 +126,7 @@ class AllWebResourcesPageTest(TestCase):
 
     def test_get_with_user(self):
         """
-        Test get with with user.
+        Test GET with with user.
 
         It should not allow to access the page, when user is not an
         administrator.
@@ -154,7 +154,7 @@ class AllWebResourcesPageTest(TestCase):
 
     def test_get_with_contributor(self):
         """
-        Test get with with contributor.
+        Test GET with with contributor.
 
         It should not allow to access the page, when user is not an
         administrator.
@@ -182,7 +182,7 @@ class AllWebResourcesPageTest(TestCase):
 
     def test_get_with_admin(self):
         """
-        Test get with with admin.
+        Test GET with with admin.
 
         It should render the page with a project.
         """
@@ -208,7 +208,7 @@ class AllWebResourcesPageTest(TestCase):
 
     def test_get_non_existing(self):
         """
-        Test get with with admin, when project does not exist.
+        Test GET with with admin, when project does not exist.
 
         It should inform user that project does not exist.
         """
@@ -243,7 +243,6 @@ class AddWebResourcePageTest(TestCase):
     def setUp(self):
         """Set up test."""
         self.request = HttpRequest()
-        self.request.method = 'GET'
         self.view = AddWebResourcePage.as_view()
 
         self.user = UserFactory.create()
@@ -260,11 +259,12 @@ class AddWebResourcePageTest(TestCase):
 
     def test_get_with_anonymous(self):
         """
-        Test get with with anonymous.
+        Test GET with with anonymous.
 
         It should redirect to login page.
         """
         self.request.user = AnonymousUser()
+        self.request.method = 'GET'
         response = self.view(self.request)
 
         self.assertEqual(response.status_code, 302)
@@ -272,12 +272,13 @@ class AddWebResourcePageTest(TestCase):
 
     def test_get_with_user(self):
         """
-        Test get with with user.
+        Test GET with with user.
 
         It should not allow to access the page, when user is not an
         administrator.
         """
         self.request.user = self.user
+        self.request.method = 'GET'
         response = self.view(self.request, project_id=self.project.id).render()
 
         rendered = render_to_string(
@@ -297,16 +298,16 @@ class AddWebResourcePageTest(TestCase):
             render_helpers.remove_csrf(response.content.decode('utf-8')),
             rendered
         )
-        self.assertEqual(WebResource.objects.count(), 0)
 
     def test_get_with_contributor(self):
         """
-        Test get with with contributor.
+        Test GET with with contributor.
 
         It should not allow to access the page, when user is not an
         administrator.
         """
         self.request.user = self.contributor
+        self.request.method = 'GET'
         response = self.view(self.request, project_id=self.project.id).render()
 
         rendered = render_to_string(
@@ -326,15 +327,15 @@ class AddWebResourcePageTest(TestCase):
             render_helpers.remove_csrf(response.content.decode('utf-8')),
             rendered
         )
-        self.assertEqual(WebResource.objects.count(), 0)
 
     def test_get_with_admin(self):
         """
-        Test get with with admin.
+        Test GET with with admin.
 
         It should render the page with a project.
         """
         self.request.user = self.admin
+        self.request.method = 'GET'
         response = self.view(self.request, project_id=self.project.id).render()
 
         rendered = render_to_string(
@@ -357,11 +358,12 @@ class AddWebResourcePageTest(TestCase):
 
     def test_get_non_existing(self):
         """
-        Test get with with admin, when project does not exist.
+        Test GET with with admin, when project does not exist.
 
         It should inform user that project does not exist.
         """
         self.request.user = self.admin
+        self.request.method = 'GET'
         response = self.view(
             self.request,
             project_id=self.project.id + 123
@@ -392,7 +394,6 @@ class SingleWebResourcePageTest(TestCase):
     def setUp(self):
         """Set up test."""
         self.request = HttpRequest()
-        self.request.method = 'GET'
         self.view = SingleWebResourcePage.as_view()
 
         self.user = UserFactory.create()
@@ -410,11 +411,12 @@ class SingleWebResourcePageTest(TestCase):
 
     def test_get_with_anonymous(self):
         """
-        Test get with with anonymous.
+        Test GET with with anonymous.
 
         It should redirect to login page.
         """
         self.request.user = AnonymousUser()
+        self.request.method = 'GET'
         response = self.view(self.request)
 
         self.assertEqual(response.status_code, 302)
@@ -422,12 +424,13 @@ class SingleWebResourcePageTest(TestCase):
 
     def test_get_with_user(self):
         """
-        Test get with with user.
+        Test GET with with user.
 
         It should not allow to access the page, when user is not an
         administrator.
         """
         self.request.user = self.user
+        self.request.method = 'GET'
         response = self.view(
             self.request,
             project_id=self.project.id,
@@ -454,12 +457,13 @@ class SingleWebResourcePageTest(TestCase):
 
     def test_get_with_contributor(self):
         """
-        Test get with with contributor.
+        Test GET with with contributor.
 
         It should not allow to access the page, when user is not an
         administrator.
         """
         self.request.user = self.contributor
+        self.request.method = 'GET'
         response = self.view(
             self.request,
             project_id=self.project.id,
@@ -486,11 +490,12 @@ class SingleWebResourcePageTest(TestCase):
 
     def test_get_with_admin(self):
         """
-        Test get with with admin.
+        Test GET with with admin.
 
         It should render the page with a project and web resource.
         """
         self.request.user = self.admin
+        self.request.method = 'GET'
         response = self.view(
             self.request,
             project_id=self.project.id,
@@ -518,11 +523,12 @@ class SingleWebResourcePageTest(TestCase):
 
     def test_get_non_existing(self):
         """
-        Test get with with admin, when web resource does not exist.
+        Test GET with with admin, when web resource does not exist.
 
         It should inform user that web resource does not exist.
         """
         self.request.user = self.admin
+        self.request.method = 'GET'
         response = self.view(
             self.request,
             project_id=self.project.id,
@@ -572,7 +578,7 @@ class RemoveWebResourcePageTest(TestCase):
 
     def test_get_with_anonymous(self):
         """
-        Test get with with anonymous.
+        Test GET with with anonymous.
 
         It should redirect to login page.
         """
@@ -584,7 +590,7 @@ class RemoveWebResourcePageTest(TestCase):
 
     def test_get_with_user(self):
         """
-        Test get with with user.
+        Test GET with with user.
 
         It should not allow to access the page, when user is not an
         administrator.
@@ -617,7 +623,7 @@ class RemoveWebResourcePageTest(TestCase):
 
     def test_get_with_contributor(self):
         """
-        Test get with with contributor.
+        Test GET with with contributor.
 
         It should not allow to access the page, when user is not an
         administrator.
@@ -650,7 +656,7 @@ class RemoveWebResourcePageTest(TestCase):
 
     def test_get_with_admin(self):
         """
-        Test get with with admin.
+        Test GET with with admin.
 
         It should remove web resource and redirect to all web resources of a
         project.
@@ -674,7 +680,7 @@ class RemoveWebResourcePageTest(TestCase):
 
     def test_get_non_existing(self):
         """
-        Test get with with admin, when web resource does not exist.
+        Test GET with with admin, when web resource does not exist.
 
         It should inform user that web resource does not exist.
         """
@@ -706,7 +712,7 @@ class RemoveWebResourcePageTest(TestCase):
 
     def test_get_when_project_is_locked(self):
         """
-        Test get with with admin, when project is locked.
+        Test GET with with admin, when project is locked.
 
         It should remove web resource and redirect to all web resources of a
         project.
