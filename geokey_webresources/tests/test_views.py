@@ -15,6 +15,7 @@ from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.tests.model_factories import ProjectFactory
 
 from .model_factories import WebResourceFactory
+from ..helpers.context_helpers import does_not_exist_msg
 from ..models import WebResource
 from ..views import (
     IndexPage,
@@ -23,11 +24,6 @@ from ..views import (
     SingleWebResourcePage,
     RemoveWebResourcePage
 )
-
-
-def does_not_exist_msg(title):
-    """Make the message when something does not exist."""
-    return '%s matching query does not exist.' % title
 
 
 class IndexPageTest(TestCase):
