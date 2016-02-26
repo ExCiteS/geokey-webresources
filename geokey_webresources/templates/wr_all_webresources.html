@@ -15,7 +15,7 @@ data-project-locked="{{ project.islocked }}"
         <div class="col-md-12">
             <h3 class="header">
                 {% if project.islocked %}<span class="glyphicon glyphicon-lock text-warning" aria-hidden="true"></span>{% endif %}
-                <span>Web resources of {{ project.name }}</span>
+                <span>Web resources</span>
 
                 {% if project.webresources.all and not project.islocked %}
                     <a role="button" href="{% url 'geokey_webresources:webresource_add' project.id %}" class="btn btn-sm btn-success pull-right">
