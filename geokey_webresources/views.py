@@ -60,7 +60,7 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
         GET method for the template.
 
         Return the context to render the view. Overwrite the method by adding
-        available data formats to the context.
+        project ID and available data formats to the context.
 
         Returns
         -------
@@ -142,10 +142,9 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
             URL for redirection.
         """
         return reverse(
-            'geokey_webresources:single_webresource',
+            'geokey_webresources:all_webresources',
             kwargs={
-                'project_id': self.object.project.id,
-                'webresource_id': self.object.id,
+                'project_id': self.object.project.id
             }
         )
 

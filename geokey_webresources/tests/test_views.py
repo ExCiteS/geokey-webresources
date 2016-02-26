@@ -485,6 +485,28 @@ class AddWebResourcePageTest(TestCase):
         )
         self.assertEqual(WebResource.objects.count(), 0)
 
+    def test_post_with_admin(self):
+        """
+        Test POST with with contributor.
+
+        It should add new web resource, when user is an administrator.
+        """
+        self.request.user = self.admin
+        self.request.method = 'POST'
+        self.request.POST = self.data
+        response = self.view(self.request, project_id=self.project.id)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                kwargs={
+                    'project_id': self.project.id
+                }
+            ),
+            response['location']
+        )
+        self.assertEqual(WebResource.objects.count(), 1)
+
     def test_post_when_project_is_locked(self):
         """
         Test POST with with admin, when project is locked.
