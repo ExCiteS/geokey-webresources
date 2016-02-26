@@ -72,6 +72,53 @@ data-webresource-id="{{ webresource.id }}"
             </div>
         </form>
     </div>
+
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h2 class="panel-title">Be careful!</h2>
+                </div>
+
+                <div class="panel-body becareful">
+                    {% if not project.islocked %}
+                        <div>
+                            <strong>Remove web resource</strong>
+                            <p>Removing a web resource cannot be undone.</p>
+                            <a href="#" class="text-danger" data-toggle="modal" data-target="#remove-confirm">Remove this web resource</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div role="dialog" id="remove-confirm" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content panel-danger">
+            <div class="modal-header panel-heading">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Are you sure?</h4>
+            </div>
+
+            <div class="modal-body panel-body">
+                <p><strong>Before you remove the web resource, please read through the consequences of this action:</strong></p>
+
+                <ul>
+                    <li>Removing a web resource cannot be undone.</li>
+                    <li>It will not delete any of the data from the original source.</li>
+                    <li>It will not delete any contributions from the project.</li>
+                </ul>
+            </div>
+
+            <div class="modal-footer panel-footer">
+                <a href="{% url 'geokey_webresources:webresource_remove' project.id webresource.id %}" class="btn btn-danger">I'm absolutely sure, remove the web resource!</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
