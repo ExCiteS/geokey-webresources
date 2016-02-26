@@ -1,0 +1,5 @@
+[run]
+omit =
+    geokey/*/tests/*
+    geokey/*/migrations/*
+    geokey/*/__init__.py
