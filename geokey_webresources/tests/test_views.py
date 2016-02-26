@@ -2,8 +2,8 @@
 
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
-from django.test import TestCase
 from django.template.loader import render_to_string
+from django.test import TestCase, RequestFactory
 from django.contrib.messages import get_messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.auth.models import AnonymousUser
@@ -243,6 +243,7 @@ class AddWebResourcePageTest(TestCase):
 
     def setUp(self):
         """Set up test."""
+        self.factory = RequestFactory()
         self.request = HttpRequest()
         self.view = AddWebResourcePage.as_view()
 
@@ -262,6 +263,9 @@ class AddWebResourcePageTest(TestCase):
             'colour': '#000000',
             'symbol': image_helpers.get_image(file_name='test_wr_symbol.png')
         }
+        self.url = reverse('geokey_webresources:webresource_add', kwargs={
+            'project_id': self.project.id
+        })
 
         setattr(self.request, 'session', 'session')
         messages = FallbackStorage(self.request)
@@ -411,10 +415,14 @@ class AddWebResourcePageTest(TestCase):
 
         It should redirect to login page.
         """
-        self.request.user = AnonymousUser()
-        self.request.method = 'POST'
-        self.request.POST = self.data
-        response = self.view(self.request, project_id=self.project.id)
+        request = self.factory.post(self.url, self.data)
+        request.user = AnonymousUser()
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id)
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/admin/account/login/', response['location'])
@@ -426,19 +434,23 @@ class AddWebResourcePageTest(TestCase):
         It should not allow to add new web resources, when user is not an
         administrator.
         """
-        self.request.user = self.user
-        self.request.method = 'POST'
-        self.request.POST = self.data
-        response = self.view(self.request, project_id=self.project.id).render()
+        request = self.factory.post(self.url, self.data)
+        request.user = self.user
 
-        form = WebResourceForm(data=self.request.POST)
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.data)
         rendered = render_to_string(
             'wr_add_webresource.html',
             {
                 'GEOKEY_VERSION': version.get_version(),
-                'PLATFORM_NAME': get_current_site(self.request).name,
-                'user': self.request.user,
-                'messages': get_messages(self.request),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
                 'form': form,
                 'error': 'Not found.',
                 'error_description': does_not_exist_msg('Project')
@@ -459,19 +471,23 @@ class AddWebResourcePageTest(TestCase):
         It should not allow to add new web resources, when user is not an
         administrator.
         """
-        self.request.user = self.contributor
-        self.request.method = 'POST'
-        self.request.POST = self.data
-        response = self.view(self.request, project_id=self.project.id).render()
+        request = self.factory.post(self.url, self.data)
+        request.user = self.contributor
 
-        form = WebResourceForm(data=self.request.POST)
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.data)
         rendered = render_to_string(
             'wr_add_webresource.html',
             {
                 'GEOKEY_VERSION': version.get_version(),
-                'PLATFORM_NAME': get_current_site(self.request).name,
-                'user': self.request.user,
-                'messages': get_messages(self.request),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
                 'form': form,
                 'error': 'Permission denied.',
                 'error_description': no_rights_to_access_msg
@@ -491,14 +507,19 @@ class AddWebResourcePageTest(TestCase):
 
         It should add new web resource, when user is an administrator.
         """
-        self.request.user = self.admin
-        self.request.method = 'POST'
-        self.request.POST = self.data
-        response = self.view(self.request, project_id=self.project.id)
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id)
 
         self.assertEqual(response.status_code, 302)
         self.assertIn(
             reverse(
+                'geokey_webresources:all_webresources',
                 kwargs={
                     'project_id': self.project.id
                 }
@@ -516,19 +537,23 @@ class AddWebResourcePageTest(TestCase):
         self.project.islocked = True
         self.project.save()
 
-        self.request.user = self.admin
-        self.request.method = 'POST'
-        self.request.POST = self.data
-        response = self.view(self.request, project_id=self.project.id).render()
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
 
-        form = WebResourceForm(data=self.request.POST)
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.data)
         rendered = render_to_string(
             'wr_add_webresource.html',
             {
                 'GEOKEY_VERSION': version.get_version(),
-                'PLATFORM_NAME': get_current_site(self.request).name,
-                'user': self.request.user,
-                'messages': get_messages(self.request),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
                 'form': form,
                 'data_formats': FORMAT,
                 'project': self.project
@@ -547,6 +572,7 @@ class SingleWebResourcePageTest(TestCase):
 
     def setUp(self):
         """Set up test."""
+        self.factory = RequestFactory()
         self.request = HttpRequest()
         self.view = SingleWebResourcePage.as_view()
 
@@ -562,11 +588,16 @@ class SingleWebResourcePageTest(TestCase):
         self.data = {
             'name': self.webresource.name,
             'description': self.webresource.description,
-            'data_format': 'GeoJSON',
-            'url': 'http://big-data.org.uk/test.json',
+            'data_format': 'KML',
+            'url': 'http://big-data.org.uk/test.kml',
             'colour': '#000000',
-            'symbol': image_helpers.get_image(file_name='test_wr_symbol.png')
+            'symbol': image_helpers.get_image(file_name='test_wr_symbol.png'),
+            'clear-symbol': 'false'
         }
+        self.url = reverse('geokey_webresources:single_webresource', kwargs={
+            'project_id': self.project.id,
+            'webresource_id': self.webresource.id
+        })
 
         setattr(self.request, 'session', 'session')
         messages = FallbackStorage(self.request)
@@ -604,6 +635,7 @@ class SingleWebResourcePageTest(TestCase):
             webresource_id=self.webresource.id
         ).render()
 
+        form = WebResourceForm()
         rendered = render_to_string(
             'wr_single_webresource.html',
             {
@@ -611,6 +643,7 @@ class SingleWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'form': form,
                 'error': 'Not found.',
                 'error_description': does_not_exist_msg('Web resource')
             }
@@ -637,6 +670,7 @@ class SingleWebResourcePageTest(TestCase):
             webresource_id=self.webresource.id
         ).render()
 
+        form = WebResourceForm()
         rendered = render_to_string(
             'wr_single_webresource.html',
             {
@@ -644,6 +678,7 @@ class SingleWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'form': form,
                 'error': 'Not found.',
                 'error_description': does_not_exist_msg('Web resource')
             }
@@ -669,6 +704,7 @@ class SingleWebResourcePageTest(TestCase):
             webresource_id=self.webresource.id
         ).render()
 
+        form = WebResourceForm()
         rendered = render_to_string(
             'wr_single_webresource.html',
             {
@@ -676,6 +712,7 @@ class SingleWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'form': form,
                 'data_formats': FORMAT,
                 'project': self.project,
                 'webresource': self.webresource
@@ -702,6 +739,7 @@ class SingleWebResourcePageTest(TestCase):
             webresource_id=self.webresource.id + 123
         ).render()
 
+        form = WebResourceForm()
         rendered = render_to_string(
             'wr_single_webresource.html',
             {
@@ -709,6 +747,7 @@ class SingleWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'form': form,
                 'error': 'Not found.',
                 'error_description': does_not_exist_msg('Web resource')
             }
@@ -726,29 +765,141 @@ class SingleWebResourcePageTest(TestCase):
 
         It should redirect to login page.
         """
-        self.request.user = AnonymousUser()
-        self.request.method = 'POST'
-        self.request.POST = self.data
-        response = self.view(self.request)
+        request = self.factory.post(self.url, self.data)
+        request.user = AnonymousUser()
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/admin/account/login/', response['location'])
 
-    def test_post_when_project_is_locked(self):
-        """
-        Test POST with with admin, when project is locked.
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
 
-        It should inform user that the project is locked and redirect to the
-        same web resource.
+    def test_post_with_user(self):
         """
-        self.project.islocked = True
-        self.project.save()
+        Test POST with with user.
 
-        self.request.user = self.admin
-        self.request.method = 'POST'
-        self.request.POST = self.data
+        It should not allow to update web resources, when user is not an
+        administrator.
+        """
+        request = self.factory.post(self.url, self.data)
+        request.user = self.user
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
         response = self.view(
-            self.request,
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Web resource')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
+
+    def test_post_with_contributor(self):
+        """
+        Test POST with with contributor.
+
+        It should not allow to update web resources, when user is not an
+        administrator.
+        """
+        request = self.factory.post(self.url, self.data)
+        request.user = self.contributor
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Web resource')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
+
+    def test_post_with_admin(self):
+        """
+        Test POST with with contributor.
+
+        It should update web resource, when user is an administrator.
+        """
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
             project_id=self.project.id,
             webresource_id=self.webresource.id
         )
@@ -756,21 +907,115 @@ class SingleWebResourcePageTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn(
             reverse(
-                'geokey_webresources:single_webresource',
+                'geokey_webresources:all_webresources',
                 kwargs={
-                    'project_id': self.project.id,
-                    'webresource_id': self.webresource.id
+                    'project_id': self.project.id
                 }
             ),
             response['location']
         )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.data.get('name'))
+        self.assertEqual(reference.description, self.data.get('description'))
+        self.assertEqual(reference.data_format, self.data.get('data_format'))
+        self.assertEqual(reference.url, self.data.get('url'))
+        self.assertEqual(reference.colour, self.data.get('colour'))
+        self.assertTrue(bool(reference.symbol))
+
+    def test_post_when_clearing_symbol(self):
+        """
+        Test POST with with contributor.
+
+        It should update web resource, when user is an administrator.
+        """
+        self.webresource.symbol = image_helpers.get_image(
+            file_name='test_wr_symbol.png'
+        )
+        self.webresource.save()
+
+        self.data['clear-symbol'] = 'true'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:all_webresources',
+                kwargs={
+                    'project_id': self.project.id
+                }
+            ),
+            response['location']
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.data.get('name'))
+        self.assertEqual(reference.description, self.data.get('description'))
+        self.assertEqual(reference.data_format, self.data.get('data_format'))
+        self.assertEqual(reference.url, self.data.get('url'))
+        self.assertEqual(reference.colour, self.data.get('colour'))
+        self.assertFalse(bool(reference.symbol))
+
+    def test_post_when_project_is_locked(self):
+        """
+        Test POST with with admin, when project is locked.
+
+        It should inform user that the project is locked.
+        """
+        self.project.islocked = True
+        self.project.save()
+
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'data_formats': FORMAT,
+                'project': self.project,
+                'webresource': self.webresource
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
         self.assertEqual(reference.data_format, self.webresource.data_format)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
-        self.assertEqual(reference.symbol, self.webresource.symbol)
+        self.assertFalse(bool(reference.symbol))
 
 
 class RemoveWebResourcePageTest(TestCase):

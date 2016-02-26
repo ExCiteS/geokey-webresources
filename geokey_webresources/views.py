@@ -1,7 +1,7 @@
 """All views for extension."""
 
 from django.core.urlresolvers import reverse
-from django.views.generic import CreateView, TemplateView
+from django.views.generic import CreateView, FormView, TemplateView
 from django.shortcuts import redirect
 from django.utils.safestring import mark_safe
 from django.contrib import messages
@@ -99,7 +99,6 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
                     self.request,
                     'The project is locked. New web resources cannot be added.'
                 )
-
             else:
                 form.instance.project = project
                 form.instance.creator = self.request.user
@@ -118,6 +117,7 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
                     )
                 )
                 return super(AddWebResourcePage, self).form_valid(form)
+
         return self.render_to_response(context)
 
     def form_invalid(self, form):
@@ -128,6 +128,11 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
         ----------
         form : geokey_webresource.forms.WebResourceForm
             Represents the user input.
+
+        Returns
+        -------
+        dict
+            Context.
         """
         messages.error(self.request, 'An error occurred.')
         return self.render_to_response(self.get_context_data(form=form))
@@ -149,7 +154,7 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
         )
 
 
-class WebResourceContext(LoginRequiredMixin, ProjectContext, TemplateView):
+class WebResourceContext(LoginRequiredMixin, ProjectContext):
     """Get web resource mixin."""
 
     def get_context_data(self, project_id, webresource_id, *args, **kwargs):
@@ -157,7 +162,8 @@ class WebResourceContext(LoginRequiredMixin, ProjectContext, TemplateView):
         GET method for the template.
 
         Return the context to render the view. Overwrite the method by adding
-        a web resource and available data formats to the context.
+        a web resource and available status types & data formats to the
+        context.
 
         Returns
         -------
@@ -186,13 +192,119 @@ class WebResourceContext(LoginRequiredMixin, ProjectContext, TemplateView):
             }
 
 
-class SingleWebResourcePage(WebResourceContext):
+class SingleWebResourcePage(WebResourceContext, FormView):
     """Single web resource page."""
 
     template_name = 'wr_single_webresource.html'
+    form_class = WebResourceForm
+
+    def get_context_data(self, *args, **kwargs):
+        """
+        GET method for the template.
+
+        Return the context to render the view. Overwrite the method by adding
+        project ID and web resource ID to the context.
+
+        Returns
+        -------
+        dict
+            Context.
+        """
+        project_id = self.kwargs['project_id']
+        webresource_id = self.kwargs['webresource_id']
+
+        return super(SingleWebResourcePage, self).get_context_data(
+            project_id,
+            webresource_id,
+            *args,
+            **kwargs
+        )
+
+    def get_form(self, form_class):
+        """Attach instance to form data."""
+        context = self.get_context_data()
+        webresource = context.get('webresource')
+
+        return form_class(instance=webresource, **self.get_form_kwargs())
+
+    def form_valid(self, form):
+        """
+        Update web resource when form data is valid.
+
+        Parameters
+        ----------
+        form : geokey_webresource.forms.WebResourceForm
+            Represents the user input.
+
+        Returns
+        -------
+        django.http.HttpResponseRedirect
+            Redirects to all web resources if web resource is updated.
+        django.http.HttpResponse
+            Rendered template if project or web resource does not exist or if
+            project is locked.
+        """
+        context = self.get_context_data(form=form)
+        project = context.get('project')
+
+        if project:
+            if project.islocked:
+                messages.error(
+                    self.request,
+                    'The project is locked. Web resources cannot be updated.'
+                )
+            else:
+                if self.request.POST.get('clear-symbol') == 'true':
+                    form.instance.symbol = None
+                form.save()
+
+                messages.success(
+                    self.request,
+                    mark_safe('The web resource has been updated.')
+                )
+                return redirect(
+                    'geokey_webresources:all_webresources',
+                    project_id=project.id
+                )
+
+        return self.render_to_response(context)
+
+    def form_invalid(self, form):
+        """
+        Display an error message when form data is invalid.
+
+        Parameters
+        ----------
+        form : geokey_webresource.forms.WebResourceForm
+            Represents the user input.
+
+        Returns
+        -------
+        dict
+            Context.
+        """
+        messages.error(self.request, 'An error occurred.')
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def get_success_url(self):
+        """
+        Set URL redirection when web resource updated successfully.
+
+        Returns
+        -------
+        string
+            URL for redirection.
+        """
+        return reverse(
+            'geokey_webresources:single_webresource',
+            kwargs={
+                'project_id': self.object.project.id,
+                'webresource_id': self.object.id,
+            }
+        )
 
 
-class RemoveWebResourcePage(WebResourceContext):
+class RemoveWebResourcePage(WebResourceContext, TemplateView):
     """Remove web resource page."""
 
     template_name = 'base.html'
