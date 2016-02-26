@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load project_attributes %}
 
 {% block title %} | Web Resources{% endblock %}
 
@@ -9,7 +8,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-12">
-            <h3 class="header">Manage web resources of your projects</h3>
+            <h3 class="header">Manage web resources</h3>
 
             <ul class="list-unstyled overview-list">
                 {% for project in projects %}
@@ -19,7 +18,12 @@
                             <a href="{% url 'geokey_webresources:all_webresources' project.id %}">{{ project.name }}</a>
                         </h3>
 
-                        {% project_attributes project %}
+                        <p>
+                            {% if project.status == 'inactive' %}<label class="label label-warning">Archived</label>{% endif %}
+                            {% with webresources=project.webresources.count %}<label class="label label-primary">{{ webresources }} web resource{{ webresources|pluralize }}</label>{% endwith %}
+                        </p>
+
+                        <p class="meta">Created by {{ project.creator }} {{ project.created_at|timesince }} ago</p>
                     </li>
                 {% empty %}
                     <li>
