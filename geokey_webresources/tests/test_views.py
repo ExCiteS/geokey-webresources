@@ -119,7 +119,7 @@ class AllWebResourcesPageTest(TestCase):
         It should redirect to login page.
         """
         self.request.user = AnonymousUser()
-        response = self.view(self.request)
+        response = self.view(self.request, project_id=self.project.id)
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/admin/account/login/', response['location'])
@@ -274,7 +274,7 @@ class AddWebResourcePageTest(TestCase):
         """
         self.request.user = AnonymousUser()
         self.request.method = 'GET'
-        response = self.view(self.request)
+        response = self.view(self.request, project_id=self.project.id)
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/admin/account/login/', response['location'])
@@ -405,7 +405,7 @@ class AddWebResourcePageTest(TestCase):
         self.request.user = AnonymousUser()
         self.request.method = 'POST'
         self.request.POST = self.data
-        response = self.view(self.request)
+        response = self.view(self.request, project_id=self.project.id)
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/admin/account/login/', response['location'])
@@ -423,11 +423,7 @@ class AddWebResourcePageTest(TestCase):
         self.request.user = self.admin
         self.request.method = 'POST'
         self.request.POST = self.data
-        response = self.view(
-            self.request,
-            project_id=self.project.id,
-            webresource_id=self.webresource.id
-        )
+        response = self.view(self.request, project_id=self.project.id)
 
         self.assertEqual(response.status_code, 302)
         self.assertIn(
@@ -480,7 +476,11 @@ class SingleWebResourcePageTest(TestCase):
         """
         self.request.user = AnonymousUser()
         self.request.method = 'GET'
-        response = self.view(self.request)
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/admin/account/login/', response['location'])
@@ -698,7 +698,11 @@ class RemoveWebResourcePageTest(TestCase):
         It should redirect to login page.
         """
         self.request.user = AnonymousUser()
-        response = self.view(self.request)
+        response = self.view(
+            self.request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
 
         self.assertEqual(response.status_code, 302)
         self.assertIn('/admin/account/login/', response['location'])
