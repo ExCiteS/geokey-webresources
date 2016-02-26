@@ -18,6 +18,7 @@ from .model_factories import WebResourceFactory
 from ..helpers.context_helpers import does_not_exist_msg
 from ..base import FORMAT
 from ..models import WebResource
+from ..forms import WebResourceForm
 from ..views import (
     IndexPage,
     AllWebResourcesPage,
@@ -290,6 +291,7 @@ class AddWebResourcePageTest(TestCase):
         self.request.method = 'GET'
         response = self.view(self.request, project_id=self.project.id).render()
 
+        form = WebResourceForm()
         rendered = render_to_string(
             'wr_add_webresource.html',
             {
@@ -297,6 +299,7 @@ class AddWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'form': form,
                 'error': 'Not found.',
                 'error_description': does_not_exist_msg('Project')
             }
@@ -319,6 +322,7 @@ class AddWebResourcePageTest(TestCase):
         self.request.method = 'GET'
         response = self.view(self.request, project_id=self.project.id).render()
 
+        form = WebResourceForm()
         rendered = render_to_string(
             'wr_add_webresource.html',
             {
@@ -326,6 +330,7 @@ class AddWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'form': form,
                 'error': 'Permission denied.',
                 'error_description': no_rights_to_access_msg
             }
@@ -347,6 +352,7 @@ class AddWebResourcePageTest(TestCase):
         self.request.method = 'GET'
         response = self.view(self.request, project_id=self.project.id).render()
 
+        form = WebResourceForm()
         rendered = render_to_string(
             'wr_add_webresource.html',
             {
@@ -354,6 +360,7 @@ class AddWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'form': form,
                 'data_formats': FORMAT,
                 'project': self.project
             }
@@ -378,6 +385,7 @@ class AddWebResourcePageTest(TestCase):
             project_id=self.project.id + 123
         ).render()
 
+        form = WebResourceForm()
         rendered = render_to_string(
             'wr_add_webresource.html',
             {
@@ -385,8 +393,9 @@ class AddWebResourcePageTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'form': form,
                 'error': 'Not found.',
-                'error_description': does_not_exist_msg('Project')
+                'error_description': does_not_exist_msg('Project'),
             }
         )
 
@@ -410,12 +419,77 @@ class AddWebResourcePageTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('/admin/account/login/', response['location'])
 
+    def test_post_with_user(self):
+        """
+        Test POST with with user.
+
+        It should not allow to add new web resources, when user is not an
+        administrator.
+        """
+        self.request.user = self.user
+        self.request.method = 'POST'
+        self.request.POST = self.data
+        response = self.view(self.request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.request.POST)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'form': form,
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
+    def test_post_with_contributor(self):
+        """
+        Test POST with with contributor.
+
+        It should not allow to add new web resources, when user is not an
+        administrator.
+        """
+        self.request.user = self.contributor
+        self.request.method = 'POST'
+        self.request.POST = self.data
+        response = self.view(self.request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.request.POST)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'form': form,
+                'error': 'Permission denied.',
+                'error_description': no_rights_to_access_msg
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
     def test_post_when_project_is_locked(self):
         """
         Test POST with with admin, when project is locked.
 
-        It should inform user that the project is locked and redirect to add
-        web resource page.
+        It should inform user that the project is locked.
         """
         self.project.islocked = True
         self.project.save()
@@ -423,17 +497,25 @@ class AddWebResourcePageTest(TestCase):
         self.request.user = self.admin
         self.request.method = 'POST'
         self.request.POST = self.data
-        response = self.view(self.request, project_id=self.project.id)
+        response = self.view(self.request, project_id=self.project.id).render()
 
-        self.assertEqual(response.status_code, 302)
-        self.assertIn(
-            reverse(
-                'geokey_webresources:add_webresource',
-                kwargs={
-                    'project_id': self.project.id
-                }
-            ),
-            response['location']
+        form = WebResourceForm(data=self.request.POST)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'form': form,
+                'data_formats': FORMAT,
+                'project': self.project
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
         )
         self.assertEqual(WebResource.objects.count(), 0)
 

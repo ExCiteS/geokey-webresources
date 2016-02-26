@@ -1,7 +1,9 @@
 """All views for extension."""
 
-from django.views.generic import TemplateView
+from django.core.urlresolvers import reverse
+from django.views.generic import CreateView, TemplateView
 from django.shortcuts import redirect
+from django.utils.safestring import mark_safe
 from django.contrib import messages
 
 from braces.views import LoginRequiredMixin
@@ -12,6 +14,7 @@ from geokey.projects.views import ProjectContext
 from .helpers.context_helpers import does_not_exist_msg
 from .base import FORMAT
 from .models import WebResource
+from .forms import WebResourceForm
 
 
 class IndexPage(LoginRequiredMixin, TemplateView):
@@ -46,10 +49,11 @@ class AllWebResourcesPage(LoginRequiredMixin, ProjectContext, TemplateView):
     template_name = 'wr_all_webresources.html'
 
 
-class AddWebResourcePage(LoginRequiredMixin, ProjectContext, TemplateView):
+class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
     """Add new web resource page."""
 
     template_name = 'wr_add_webresource.html'
+    form_class = WebResourceForm
 
     def get_context_data(self, *args, **kwargs):
         """
@@ -63,10 +67,86 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, TemplateView):
         dict
             Context.
         """
+        project_id = self.kwargs['project_id']
+
         return super(AddWebResourcePage, self).get_context_data(
+            project_id,
             data_formats=FORMAT,
             *args,
             **kwargs
+        )
+
+    def form_valid(self, form):
+        """
+        Add web resource when form data is valid.
+
+        Parameters
+        ----------
+        form : geokey_webresource.forms.WebResourceForm
+            Represents the user input.
+
+        Returns
+        -------
+        django.http.HttpResponse
+            Rendered template.
+        """
+        context = self.get_context_data(form=form)
+        project = context.get('project')
+
+        if project:
+            if project.islocked:
+                messages.error(
+                    self.request,
+                    'The project is locked. New web resources cannot be added.'
+                )
+
+            else:
+                form.instance.project = project
+                form.instance.creator = self.request.user
+
+                add_another_url = reverse(
+                    'geokey_webresources:webresource_add',
+                    kwargs={
+                        'project_id': project.id
+                    }
+                )
+                messages.success(
+                    self.request,
+                    mark_safe(
+                        'The web resource has been added. <a href="%s">Add '
+                        'another web resource.</a>' % add_another_url
+                    )
+                )
+                return super(AddWebResourcePage, self).form_valid(form)
+        return self.render_to_response(context)
+
+    def form_invalid(self, form):
+        """
+        Display an error message when form data is invalid.
+
+        Parameters
+        ----------
+        form : geokey_webresource.forms.WebResourceForm
+            Represents the user input.
+        """
+        messages.error(self.request, 'An error occurred.')
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def get_success_url(self):
+        """
+        Set URL redirection when web resource created successfully.
+
+        Returns
+        -------
+        string
+            URL for redirection.
+        """
+        return reverse(
+            'geokey_webresources:single_webresource',
+            kwargs={
+                'project_id': self.object.project.id,
+                'webresource_id': self.object.id,
+            }
         )
 
 

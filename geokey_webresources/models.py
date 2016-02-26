@@ -26,8 +26,9 @@ class WebResource(StatusModel, TimeStampedModel):
     colour = models.TextField(default='#0033ff')
     symbol = models.ImageField(
         upload_to='webresources/symbols',
+        max_length=500,
         null=True,
-        max_length=500
+        blank=True
     )
 
     project = models.ForeignKey(
@@ -44,9 +45,7 @@ class WebResource(StatusModel, TimeStampedModel):
         ordering = ['order']
 
     def delete(self):
-        """
-        Delete the web resource by setting its status to `deleted`.
-        """
+        """Delete the web resource by setting its status to `deleted`."""
         self.status = self.STATUS.deleted
         self.save()
 

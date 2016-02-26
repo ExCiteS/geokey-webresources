@@ -20,34 +20,48 @@ data-project-locked="{{ project.islocked }}"
                 <span>Add new web resource</span>
             </h3>
 
-            <div class="form-group">
+            <div class="form-group {% if form.errors.name %}has-error{% endif %}">
                 <label for="name" class="control-label">Name (required)</label>
-                <input type="text" id="name" class="form-control input-lg" name="name" maxlength="100" required />
+                <input type="text" id="name" class="form-control" name="name" value="{{ form.name.value|default_if_none:'' }}" maxlength="100" required />
+                {% if form.errors.name %}<span class="help-block">{{ form.errors.name|striptags }}</span>{% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group {% if form.errors.description %}has-error{% endif %}">
                 <label for="description" class="control-label">Description</label>
-                <textarea id="description" class="form-control input-lg" rows="5" name="description"></textarea>
+                <textarea id="description" class="form-control" rows="5" name="description">{{ form.description.value|default_if_none:'' }}</textarea>
+                {% if form.errors.description %}<span class="help-block">{{ form.errors.description|striptags }}</span>{% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group {% if form.errors.data_format %}has-error{% endif %}">
                 <label for="data_format" class="control-label">Data format (required)</label>
-                <select id="data_format" class="form-control input-lg" name="data_format" required>
+                <select id="data_format" class="form-control" name="data_format" required>
                     <option value="">Please select a value</option>
                     {% for key, value in data_formats %}
-                        <option value="{{ key }}">{{ value }}</option>
+                        <option value="{{ key }}" {% if form.data_format.value == key %}selected{% endif %}>{{ value }}</option>
                     {% endfor %}
                 </select>
+                {% if form.errors.data_format %}<span class="help-block">{{ form.errors.data_format|striptags }}</span>{% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group {% if form.errors.url %}has-error{% endif %}">
                 <label for="name" class="control-label">URL (required)</label>
-                <input type="url" id="url" class="form-control input-lg" name="url" maxlength="250" required />
+                <input type="url" id="url" class="form-control" name="url" value="{{ form.url.value|default_if_none:'' }}" maxlength="250" required />
+                {% if form.errors.url %}<span class="help-block">{{ form.errors.url|striptags }}</span>{% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group {% if form.errors.colour %}has-error{% endif %}">
+                <label for="colour" class="control-label">Colour</label>
+                <div id="colour" class="input-group">
+                    <input type="text" class="form-control" name="colour" value="{{ form.colour.value|default_if_none:'#0033ff' }}" />
+                    <span class="input-group-addon"><i></i></span>
+                </div>
+                {% if form.errors.colour %}<span class="help-block">{{ form.errors.colour|striptags }}</span>{% endif %}
+            </div>
+
+            <div class="form-group {% if form.errors.symbol %}has-error{% endif %}">
                 <label for="symbol" class="control-label">Symbol</label>
-                <input type="file" id="symbol" name="symbol" data-target="symbol" />
+                <input type="file" id="symbol" name="symbol" accept="image/*" data-target="symbol" />
+                {% if form.errors.symbol %}<span class="help-block">{{ form.errors.symbol|striptags }}</span>{% endif %}
             </div>
 
             <div class="form-group">
@@ -60,6 +74,9 @@ data-project-locked="{{ project.islocked }}"
 {% endblock %}
 
 {% block libraries %}
+<link rel="stylesheet" href="/static/lib/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css">
+<script src="/static/lib/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js"></script>
+
 <link rel="stylesheet" href="/static/lib/bootstrap-fileinput/css/bootstrap-fileinput.min.css">
 <script src="/static/lib/bootstrap-fileinput/js/bootstrap-fileinput.min.js"></script>
 
@@ -67,6 +84,11 @@ data-project-locked="{{ project.islocked }}"
 <script src="/static/js/admin.ui.fileinput.js"></script>
 
 <script>
+// Initialise color picker
+$('#colour').colorpicker({
+    format: 'hex'
+});
+
 // Initialise file upload
 $('input:file').each(function() {
     Ui.FileInput.init($(this), {
