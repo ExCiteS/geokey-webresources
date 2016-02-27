@@ -1,5 +1,8 @@
 [run]
+branch = true
+
+[report]
 omit =
-    geokey/*/tests/*
-    geokey/*/migrations/*
-    geokey/*/__init__.py
+    */tests/*
+    */migrations/*
+    */__init__.py
