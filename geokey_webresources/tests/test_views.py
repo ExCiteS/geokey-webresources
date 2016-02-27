@@ -210,7 +210,7 @@ class AllWebResourcesPageTest(TestCase):
             rendered
         )
 
-    def test_get_non_existing(self):
+    def test_get_when_no_project(self):
         """
         Test GET with with admin, when project does not exist.
 
@@ -379,7 +379,7 @@ class AddWebResourcePageTest(TestCase):
             rendered
         )
 
-    def test_get_non_existing(self):
+    def test_get_when_no_project(self):
         """
         Test GET with with admin, when project does not exist.
 
@@ -506,7 +506,7 @@ class AddWebResourcePageTest(TestCase):
 
     def test_post_with_admin(self):
         """
-        Test POST with with contributor.
+        Test POST with with admin.
 
         It should add new web resource, when user is an administrator.
         """
@@ -530,6 +530,81 @@ class AddWebResourcePageTest(TestCase):
             response['location']
         )
         self.assertEqual(WebResource.objects.count(), 1)
+
+    def test_post_when_wrong_data(self):
+        """
+        Test POST with with admin, when data is wrong.
+
+        It should inform user that data is wrong.
+        """
+        self.data['url'] = 'some web address'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'data_formats': FORMAT,
+                'project': self.project
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
+    def test_post_when_no_project(self):
+        """
+        Test POST with with admin, when project does not exist.
+
+        It should inform user that project does not exist.
+        """
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id + 123
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Project')
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
 
     def test_post_when_project_is_locked(self):
         """
@@ -731,7 +806,41 @@ class SingleWebResourcePageTest(TestCase):
             rendered
         )
 
-    def test_get_non_existing(self):
+    def test_get_when_no_project(self):
+        """
+        Test GET with with admin, when project does not exist.
+
+        It should inform user that web resource does not exist.
+        """
+        self.request.user = self.admin
+        self.request.method = 'GET'
+        response = self.view(
+            self.request,
+            project_id=self.project.id + 123,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm()
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'form': form,
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Web resource')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_when_no_webresource(self):
         """
         Test GET with with admin, when web resource does not exist.
 
@@ -893,7 +1002,7 @@ class SingleWebResourcePageTest(TestCase):
 
     def test_post_with_admin(self):
         """
-        Test POST with with contributor.
+        Test POST with with admin.
 
         It should update web resource, when user is an administrator.
         """
@@ -931,9 +1040,9 @@ class SingleWebResourcePageTest(TestCase):
 
     def test_post_when_clearing_symbol(self):
         """
-        Test POST with with contributor.
+        Test POST with with admin, when clearing symbol.
 
-        It should update web resource, when user is an administrator.
+        It should clear symbol from web resource.
         """
         self.webresource.symbol = image_helpers.get_image(
             file_name='test_wr_symbol.png'
@@ -973,6 +1082,150 @@ class SingleWebResourcePageTest(TestCase):
         self.assertEqual(reference.colour, self.data.get('colour'))
         self.assertFalse(bool(reference.symbol))
 
+    def test_post_when_wrong_data(self):
+        """
+        Test POST with with admin, when data is wrong.
+
+        It should inform user that data is wrong.
+        """
+        self.data['name'] = ''
+        self.data['data_format'] = 'CSV'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'data_formats': FORMAT,
+                'project': self.project,
+                'webresource': self.webresource
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
+
+    def test_post_when_no_project(self):
+        """
+        Test POST with with admin, when project does not exist.
+
+        It should inform user that web resource does not exist.
+        """
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id + 123,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Web resource')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
+
+    def test_post_when_no_webresource(self):
+        """
+        Test POST with with admin, when web resource does not exist.
+
+        It should inform user that web resource does not exist.
+        """
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id + 123
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Web resource')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
+
     def test_post_when_project_is_locked(self):
         """
         Test POST with with admin, when project is locked.
@@ -1009,6 +1262,7 @@ class SingleWebResourcePageTest(TestCase):
                 'webresource': self.webresource
             }
         )
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             render_helpers.remove_csrf(response.content.decode('utf-8')),
@@ -1152,7 +1406,39 @@ class RemoveWebResourcePageTest(TestCase):
         )
         self.assertEqual(WebResource.objects.count(), 0)
 
-    def test_get_non_existing(self):
+    def test_get_when_no_project(self):
+        """
+        Test GET with with admin, when project does not exist.
+
+        It should inform user that web resource does not exist.
+        """
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.project.id + 123,
+            webresource_id=self.webresource.id
+        ).render()
+
+        rendered = render_to_string(
+            'base.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'error': 'Not found.',
+                'error_description': does_not_exist_msg('Web resource')
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 1)
+
+    def test_get_when_no_webresource(self):
         """
         Test GET with with admin, when web resource does not exist.
 
