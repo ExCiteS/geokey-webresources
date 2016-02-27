@@ -594,10 +594,13 @@ class SingleWebResourcePageTest(TestCase):
             'symbol': image_helpers.get_image(file_name='test_wr_symbol.png'),
             'clear-symbol': 'false'
         }
-        self.url = reverse('geokey_webresources:single_webresource', kwargs={
-            'project_id': self.project.id,
-            'webresource_id': self.webresource.id
-        })
+        self.url = reverse(
+            'geokey_webresources:single_webresource',
+            kwargs={
+                'project_id': self.project.id,
+                'webresource_id': self.webresource.id
+            }
+        )
 
         setattr(self.request, 'session', 'session')
         messages = FallbackStorage(self.request)

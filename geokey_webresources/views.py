@@ -238,11 +238,8 @@ class SingleWebResourcePage(WebResourceContext, FormView):
 
         Returns
         -------
-        django.http.HttpResponseRedirect
-            Redirects to all web resources if web resource is updated.
         django.http.HttpResponse
-            Rendered template if project or web resource does not exist or if
-            project is locked.
+            Rendered template.
         """
         context = self.get_context_data(form=form)
         project = context.get('project')
@@ -262,10 +259,7 @@ class SingleWebResourcePage(WebResourceContext, FormView):
                     self.request,
                     mark_safe('The web resource has been updated.')
                 )
-                return redirect(
-                    'geokey_webresources:all_webresources',
-                    project_id=project.id
-                )
+                return super(SingleWebResourcePage, self).form_valid(form)
 
         return self.render_to_response(context)
 
@@ -296,10 +290,9 @@ class SingleWebResourcePage(WebResourceContext, FormView):
             URL for redirection.
         """
         return reverse(
-            'geokey_webresources:single_webresource',
+            'geokey_webresources:all_webresources',
             kwargs={
-                'project_id': self.object.project.id,
-                'webresource_id': self.object.id,
+                'project_id': self.object.project.id
             }
         )
 
