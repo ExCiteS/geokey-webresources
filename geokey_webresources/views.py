@@ -198,6 +198,22 @@ class SingleWebResourcePage(WebResourceContext, FormView):
     template_name = 'wr_single_webresource.html'
     form_class = WebResourceForm
 
+    def get_object(self):
+        """
+        Get and return web resource object.
+
+        Returns
+        -------
+        geokey_webresource.models.WebResource
+            Web resource object.
+        """
+        try:
+            return WebResource.objects.get(
+                pk=self.kwargs['webresource_id']
+            )
+        except WebResource.DoesNotExist:
+            return None
+
     def get_context_data(self, *args, **kwargs):
         """
         GET method for the template.
@@ -221,11 +237,8 @@ class SingleWebResourcePage(WebResourceContext, FormView):
         )
 
     def get_form(self, form_class):
-        """Attach instance to form data."""
-        context = self.get_context_data()
-        webresource = context.get('webresource')
-
-        return form_class(instance=webresource, **self.get_form_kwargs())
+        """Attach instance object to form data."""
+        return form_class(instance=self.get_object(), **self.get_form_kwargs())
 
     def form_valid(self, form):
         """
