@@ -52,15 +52,6 @@ class WebResource(StatusModel, TimeStampedModel):
 
 @receiver(models.signals.post_save, sender=Project)
 def post_save_project(sender, instance, **kwargs):
-    """
-    Change status of web imports according to project's status.
-
-    If project is set to `inactive`, make web resources `inactive` too. And if
-    project is deleted, delete associated web resources.
-    """
-    webresources = WebResource.objects.filter(project=instance)
-
-    if instance.status == 'inactive':
-        webresources.update(status=WebResource.STATUS.inactive)
-    elif instance.status == 'deleted':
-        webresources.delete()
+    """Remove associated web resources when the project gets deleted."""
+    if instance.status == 'deleted':
+        WebResource.objects.filter(project=instance).delete()

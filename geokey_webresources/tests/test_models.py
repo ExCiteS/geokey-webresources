@@ -31,29 +31,12 @@ class WebResourceTest(TestCase):
 class PostSaveProjectTest(TestCase):
     """Test post save of project."""
 
-    def test_post_save_project_when_making_inactive(self):
-        """
-        Test delete project.
-
-        Statuses of web resources should be also set to `inactive`.
-        """
-        project = ProjectFactory.create(status='active')
-        webresource = WebResourceFactory.create(project=project)
-        project.status = 'inactive'
-        project.save()
-
-        post_save_project(Project, instance=project)
-
-        reference = WebResource.objects.get(pk=webresource.id)
-        self.assertEqual(reference.status, STATUS.inactive)
-
     @raises(WebResource.DoesNotExist)
     def test_post_save_project_when_deleting(self):
         """
         Test delete project.
 
-        Web resources should still exist, but their statuses should be set to
-        `deleted`.
+        Web resources should also be removed.
         """
         project = ProjectFactory.create(status='active')
         webresource = WebResourceFactory.create(project=project)
