@@ -1793,7 +1793,7 @@ class UpdateWebResourceAjaxTest(TestCase):
         """
         Test PUT with with admin.
 
-        It should return 404 response.
+        It should return 200 response.
         """
         response = self._put(
             {'status': 'inactive'},
