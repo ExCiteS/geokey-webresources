@@ -1577,12 +1577,10 @@ class ReorderWebResourcesAjaxTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
-        )
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_2.id).order, 0
-        )
+
+        reference = self.project.webresources.all()
+        self.assertEqual(reference[0].order, 0)
+        self.assertEqual(reference[1].order, 0)
 
     def test_post_with_user(self):
         """
@@ -1601,12 +1599,10 @@ class ReorderWebResourcesAjaxTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
-        )
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_2.id).order, 0
-        )
+
+        reference = self.project.webresources.all()
+        self.assertEqual(reference[0].order, 0)
+        self.assertEqual(reference[1].order, 0)
 
     def test_post_with_contributor(self):
         """
@@ -1625,12 +1621,10 @@ class ReorderWebResourcesAjaxTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
-        )
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_2.id).order, 0
-        )
+
+        reference = self.project.webresources.all()
+        self.assertEqual(reference[0].order, 0)
+        self.assertEqual(reference[1].order, 0)
 
     def test_post_with_admin(self):
         """
@@ -1649,12 +1643,10 @@ class ReorderWebResourcesAjaxTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 2
-        )
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_2.id).order, 1
-        )
+
+        reference = self.project.webresources.all()
+        self.assertEqual(reference[0], self.webresource_2)
+        self.assertEqual(reference[1], self.webresource_1)
 
     def test_post_when_wrong_webresource_id(self):
         """
@@ -1673,12 +1665,10 @@ class ReorderWebResourcesAjaxTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
-        )
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_2.id).order, 0
-        )
+
+        reference = self.project.webresources.all()
+        self.assertEqual(reference[0].order, 0)
+        self.assertEqual(reference[1].order, 0)
 
     def test_post_when_no_project(self):
         """
@@ -1720,12 +1710,10 @@ class ReorderWebResourcesAjaxTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
-        )
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_2.id).order, 0
-        )
+
+        reference = self.project.webresources.all()
+        self.assertEqual(reference[0].order, 0)
+        self.assertEqual(reference[1].order, 0)
 
 
 class UpdateWebResourceAjaxTest(TestCase):
