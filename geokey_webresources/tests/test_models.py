@@ -8,7 +8,6 @@ from geokey.projects.models import Project
 from geokey.projects.tests.model_factories import ProjectFactory
 
 from .model_factories import WebResourceFactory
-from ..base import STATUS
 from ..models import WebResource, post_save_project
 
 
