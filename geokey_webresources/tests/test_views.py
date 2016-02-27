@@ -1,5 +1,6 @@
 """All tests for views."""
 
+import os
 import json
 
 from django.core.urlresolvers import reverse
@@ -267,7 +268,7 @@ class AddWebResourcePageTest(TestCase):
             'data_format': 'GeoJSON',
             'url': 'http://big-data.org.uk/test.json',
             'colour': '#000000',
-            'symbol': image_helpers.get_image(file_name='test_wr_symbol.png')
+            'symbol': image_helpers.get_image(file_name='test_symbol.png')
         }
         self.url = reverse('geokey_webresources:webresource_add', kwargs={
             'project_id': self.project.id
@@ -276,6 +277,12 @@ class AddWebResourcePageTest(TestCase):
         setattr(self.request, 'session', 'session')
         messages = FallbackStorage(self.request)
         setattr(self.request, '_messages', messages)
+
+    def tearDown(self):
+        """Tear down test."""
+        for webresource in WebResource.objects.all():
+            if webresource.symbol:
+                webresource.symbol.delete()
 
     def test_get_with_anonymous(self):
         """
@@ -672,7 +679,7 @@ class SingleWebResourcePageTest(TestCase):
             'data_format': 'KML',
             'url': 'http://big-data.org.uk/test.kml',
             'colour': '#000000',
-            'symbol': image_helpers.get_image(file_name='test_wr_symbol.png'),
+            'symbol': image_helpers.get_image(file_name='test_symbol.png'),
             'clear-symbol': 'false'
         }
         self.url = reverse(
@@ -686,6 +693,12 @@ class SingleWebResourcePageTest(TestCase):
         setattr(self.request, 'session', 'session')
         messages = FallbackStorage(self.request)
         setattr(self.request, '_messages', messages)
+
+    def tearDown(self):
+        """Tear down test."""
+        for webresource in WebResource.objects.all():
+            if webresource.symbol:
+                webresource.symbol.delete()
 
     def test_get_with_anonymous(self):
         """
@@ -1048,9 +1061,11 @@ class SingleWebResourcePageTest(TestCase):
         It should clear symbol from web resource.
         """
         self.webresource.symbol = image_helpers.get_image(
-            file_name='test_wr_symbol.png'
+            file_name='test_symbol.png'
         )
         self.webresource.save()
+
+        symbol = self.webresource.symbol.path
 
         self.data['clear-symbol'] = 'true'
         request = self.factory.post(self.url, self.data)
@@ -1084,6 +1099,8 @@ class SingleWebResourcePageTest(TestCase):
         self.assertEqual(reference.url, self.data.get('url'))
         self.assertEqual(reference.colour, self.data.get('colour'))
         self.assertFalse(bool(reference.symbol))
+
+        os.remove(symbol)
 
     def test_post_when_wrong_data(self):
         """
