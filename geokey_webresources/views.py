@@ -322,8 +322,8 @@ class RemoveWebResourcePage(WebResourceContext, TemplateView):
         """
         GET method for removing web resource.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         request : django.http.HttpRequest
             Object representing the request.
         project_id : int
@@ -345,7 +345,7 @@ class RemoveWebResourcePage(WebResourceContext, TemplateView):
         if webresource:
             if webresource.project.islocked:
                 messages.error(
-                    self.request,
+                    request,
                     'The project is locked. Web resource cannot be removed.'
                 )
                 return redirect(
@@ -357,7 +357,7 @@ class RemoveWebResourcePage(WebResourceContext, TemplateView):
                 webresource.delete()
 
                 messages.success(
-                    self.request,
+                    request,
                     'The web resource has been removed.'
                 )
                 return redirect(
