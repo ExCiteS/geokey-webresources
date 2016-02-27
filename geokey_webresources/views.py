@@ -9,8 +9,13 @@ from django.shortcuts import redirect
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
 from braces.views import LoginRequiredMixin
 
+from geokey.core.decorators import handle_exceptions_for_ajax
 from geokey.projects.models import Project
 from geokey.projects.views import ProjectContext
 
@@ -18,6 +23,7 @@ from .helpers.context_helpers import does_not_exist_msg
 from .base import FORMAT
 from .models import WebResource
 from .forms import WebResourceForm
+from .serializers import WebResourceSerializer
 
 
 class IndexPage(LoginRequiredMixin, TemplateView):
@@ -366,3 +372,60 @@ class RemoveWebResourcePage(WebResourceContext, TemplateView):
                 )
 
         return self.render_to_response(context)
+
+
+class UpdateWebResourceAjax(APIView):
+    """Update web resource via Ajax."""
+
+    @handle_exceptions_for_ajax
+    def put(self, request, project_id, webresource_id):
+        """
+        PUT method for updating web resource.
+
+        Parameters
+        ----------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : int
+            Identifies the project in the database.
+        webresource_id : int
+            Identifies the web resource in the database.
+
+        Returns
+        -------
+        rest_framework.response.Response
+            Response to the request.
+        """
+        project = Project.objects.as_admin(request.user, project_id)
+
+        if project.islocked:
+            return Response(
+                {'error': 'The project is locked.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        try:
+            webresource = WebResource.objects.get(
+                pk=webresource_id,
+                project=project
+            )
+            serializer = WebResourceSerializer(
+                webresource,
+                data=request.data,
+                partial=True,
+                fields=('id', 'status')
+            )
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            else:
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except WebResource.DoesNotExist, error:
+            return Response(
+                {'error': str(error)},
+                status=status.HTTP_404_NOT_FOUND
+            )

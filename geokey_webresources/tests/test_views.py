@@ -9,6 +9,8 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sites.shortcuts import get_current_site
 
+from rest_framework.test import APIRequestFactory, force_authenticate
+
 from geokey import version
 from geokey.core.tests.helpers import render_helpers, image_helpers
 from geokey.users.tests.model_factories import UserFactory
@@ -16,7 +18,7 @@ from geokey.projects.tests.model_factories import ProjectFactory
 
 from .model_factories import WebResourceFactory
 from ..helpers.context_helpers import does_not_exist_msg
-from ..base import FORMAT
+from ..base import FORMAT, STATUS
 from ..models import WebResource
 from ..forms import WebResourceForm
 from ..views import (
@@ -24,7 +26,8 @@ from ..views import (
     AllWebResourcesPage,
     AddWebResourcePage,
     SingleWebResourcePage,
-    RemoveWebResourcePage
+    RemoveWebResourcePage,
+    UpdateWebResourceAjax
 )
 
 
@@ -1210,3 +1213,178 @@ class RemoveWebResourcePageTest(TestCase):
             response['location']
         )
         self.assertEqual(WebResource.objects.count(), 1)
+
+
+class UpdateWebResourceAjaxTest(TestCase):
+    """Test update web resource via Ajax."""
+
+    def setUp(self):
+        """Set up test."""
+        self.factory = APIRequestFactory()
+        self.view = UpdateWebResourceAjax.as_view()
+
+        self.user = UserFactory.create()
+        self.admin = UserFactory.create()
+        self.contributor = UserFactory.create()
+        self.project = ProjectFactory.create(
+            add_admins=[self.admin],
+            add_contributors=[self.contributor]
+        )
+        self.webresource = WebResourceFactory.create(
+            status=STATUS.active,
+            project=self.project
+        )
+
+        self.url = reverse(
+            'geokey_webresources:ajax_webresource_update',
+            kwargs={
+                'project_id': self.project.id,
+                'webresource_id': self.webresource.id
+            }
+        )
+
+    def _put(self, data, user):
+        """Make test method for PUT."""
+        request = self.factory.put(self.url, data)
+        force_authenticate(request, user=user)
+
+        return self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+    def test_put_with_anonymous(self):
+        """
+        Test PUT with with anonymous.
+
+        It should return 404 response.
+        """
+        response = self._put(
+            {'status': 'inactive'},
+            AnonymousUser()
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource.id).status,
+            self.webresource.status
+        )
+
+    def test_put_with_user(self):
+        """
+        Test PUT with with user.
+
+        It should return 404 response.
+        """
+        response = self._put(
+            {'status': 'inactive'},
+            self.user
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource.id).status,
+            self.webresource.status
+        )
+
+    def test_put_with_contributor(self):
+        """
+        Test PUT with with contributor.
+
+        It should return 403 response.
+        """
+        response = self._put(
+            {'status': 'inactive'},
+            self.contributor
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource.id).status,
+            self.webresource.status
+        )
+
+    def test_put_with_admin(self):
+        """
+        Test PUT with with admin.
+
+        It should return 404 response.
+        """
+        response = self._put(
+            {'status': 'inactive'},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource.id).status,
+            STATUS.inactive
+        )
+
+    def test_put_when_wrong_status(self):
+        """
+        Test PUT with with admin, when status is wrong.
+
+        It should return 400 response.
+        """
+        response = self._put(
+            {'status': 'wrong'},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource.id).status,
+            self.webresource.status
+        )
+
+    def test_put_when_no_project(self):
+        """
+        Test PUT with with admin, when project does not exist.
+
+        It should return 404 response.
+        """
+        self.project.delete()
+
+        response = self._put(
+            {'status': 'inactive'},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_put_when_no_webresource(self):
+        """
+        Test PUT with with admin, when web resource does not exist.
+
+        It should return 404 response.
+        """
+        self.webresource.delete()
+
+        response = self._put(
+            {'status': 'inactive'},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_put_when_project_is_locked(self):
+        """
+        Test PUT with with admin, when project is locked.
+
+        It should return 403 response.
+        """
+        self.project.islocked = True
+        self.project.save()
+
+        response = self._put(
+            {'status': 'wrong'},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource.id).status,
+            self.webresource.status
+        )

@@ -7,7 +7,8 @@ from .views import (
     AllWebResourcesPage,
     AddWebResourcePage,
     SingleWebResourcePage,
-    RemoveWebResourcePage
+    RemoveWebResourcePage,
+    UpdateWebResourceAjax
 )
 
 
@@ -40,4 +41,14 @@ urlpatterns = [
         r'webresources/(?P<webresource_id>[0-9]+)/remove/$',
         RemoveWebResourcePage.as_view(),
         name='webresource_remove'),
+
+    # ###########################
+    # ADMIN AJAX
+    # ###########################
+
+    url(
+        r'^ajax/projects/(?P<project_id>[0-9]+)/'
+        r'webresources/(?P<webresource_id>[0-9]+)/$',
+        UpdateWebResourceAjax.as_view(),
+        name='ajax_webresource_update'),
 ]

@@ -1,11 +1,13 @@
 """All serializers for extension."""
 
-from rest_framework.serializers import SerializerMethodField, ModelSerializer
+from rest_framework.serializers import SerializerMethodField
+
+from geokey.core.serializers import FieldSelectorSerializer
 
 from .models import WebResource
 
 
-class WebResourceSerializer(ModelSerializer):
+class WebResourceSerializer(FieldSelectorSerializer):
     """Serializer for web resource."""
 
     symbol = SerializerMethodField()
@@ -28,5 +30,5 @@ class WebResourceSerializer(ModelSerializer):
         """Serializer meta."""
 
         model = WebResource
-        fields = ('id', 'name', 'description', 'data_format', 'url',
+        fields = ('id', 'status', 'name', 'description', 'data_format', 'url',
                   'colour', 'symbol')
