@@ -1,5 +1,7 @@
 """All tests for views."""
 
+import json
+
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
 from django.template.loader import render_to_string
@@ -1529,7 +1531,11 @@ class ReorderWebResourcesAjaxTest(TestCase):
 
     def _post(self, data, user):
         """Make test method for POST."""
-        request = self.factory.post(self.url, data)
+        request = self.factory.post(
+            self.url,
+            data,
+            content_type='application/json'
+        )
         force_authenticate(request, user=user)
 
         return self.view(
@@ -1544,10 +1550,12 @@ class ReorderWebResourcesAjaxTest(TestCase):
         It should return 404 response.
         """
         response = self._post(
-            {'order': [
-                {self.webresource_2.id: 1},
-                {self.webresource_1.id: 2}
-            ]},
+            json.dumps({
+                'order': [
+                    self.webresource_2.id,
+                    self.webresource_1.id
+                ]
+            }),
             AnonymousUser()
         )
 
@@ -1556,7 +1564,7 @@ class ReorderWebResourcesAjaxTest(TestCase):
             WebResource.objects.get(pk=self.webresource_1.id).order, 0
         )
         self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+            WebResource.objects.get(pk=self.webresource_2.id).order, 0
         )
 
     def test_post_with_user(self):
@@ -1566,10 +1574,12 @@ class ReorderWebResourcesAjaxTest(TestCase):
         It should return 404 response.
         """
         response = self._post(
-            {'order': [
-                {self.webresource_2.id: 1},
-                {self.webresource_1.id: 2}
-            ]},
+            json.dumps({
+                'order': [
+                    self.webresource_2.id,
+                    self.webresource_1.id
+                ]
+            }),
             self.user
         )
 
@@ -1578,7 +1588,7 @@ class ReorderWebResourcesAjaxTest(TestCase):
             WebResource.objects.get(pk=self.webresource_1.id).order, 0
         )
         self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+            WebResource.objects.get(pk=self.webresource_2.id).order, 0
         )
 
     def test_post_with_contributor(self):
@@ -1588,10 +1598,12 @@ class ReorderWebResourcesAjaxTest(TestCase):
         It should return 403 response.
         """
         response = self._post(
-            {'order': [
-                {self.webresource_2.id: 1},
-                {self.webresource_1.id: 2}
-            ]},
+            json.dumps({
+                'order': [
+                    self.webresource_2.id,
+                    self.webresource_1.id
+                ]
+            }),
             self.contributor
         )
 
@@ -1600,7 +1612,7 @@ class ReorderWebResourcesAjaxTest(TestCase):
             WebResource.objects.get(pk=self.webresource_1.id).order, 0
         )
         self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+            WebResource.objects.get(pk=self.webresource_2.id).order, 0
         )
 
     def test_post_with_admin(self):
@@ -1610,49 +1622,45 @@ class ReorderWebResourcesAjaxTest(TestCase):
         It should return 200 response.
         """
         response = self._post(
-            {'order': [
-                {self.webresource_2.id: 1},
-                {self.webresource_1.id: 2}
-            ]},
+            json.dumps({
+                'order': [
+                    self.webresource_2.id,
+                    self.webresource_1.id
+                ]
+            }),
             self.admin
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            WebResource.objects.get(pk=self.webresource.id).status,
-            STATUS.inactive
-        )
-        self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 1
-        )
-        self.assertEqual(
             WebResource.objects.get(pk=self.webresource_1.id).order, 2
         )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_2.id).order, 1
+        )
 
-    def test_put_when_wrong_webresource_id(self):
+    def test_post_when_wrong_webresource_id(self):
         """
         Test POST with with admin, when web resource ID is wrong.
 
         It should return 400 response.
         """
         response = self._post(
-            {'order': [
-                {self.webresource_2.id: 1},
-                {self.webresource_1.id + 123: 2}
-            ]},
+            json.dumps({
+                'order': [
+                    self.webresource_2.id,
+                    self.webresource_1.id + 123
+                ]
+            }),
             self.admin
         )
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
-            WebResource.objects.get(pk=self.webresource.id).status,
-            self.webresource.status
-        )
-        self.assertEqual(
             WebResource.objects.get(pk=self.webresource_1.id).order, 0
         )
         self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+            WebResource.objects.get(pk=self.webresource_2.id).order, 0
         )
 
     def test_post_when_no_project(self):
@@ -1664,10 +1672,12 @@ class ReorderWebResourcesAjaxTest(TestCase):
         self.project.delete()
 
         response = self._post(
-            {'order': [
-                {self.webresource_2.id: 1},
-                {self.webresource_1.id: 2}
-            ]},
+            json.dumps({
+                'order': [
+                    self.webresource_2.id,
+                    self.webresource_1.id
+                ]
+            }),
             self.admin
         )
 
@@ -1683,10 +1693,12 @@ class ReorderWebResourcesAjaxTest(TestCase):
         self.project.save()
 
         response = self._post(
-            {'order': [
-                {self.webresource_2.id: 1},
-                {self.webresource_1.id: 2}
-            ]},
+            json.dumps({
+                'order': [
+                    self.webresource_2.id,
+                    self.webresource_1.id
+                ]
+            }),
             self.admin
         )
 
@@ -1695,7 +1707,7 @@ class ReorderWebResourcesAjaxTest(TestCase):
             WebResource.objects.get(pk=self.webresource_1.id).order, 0
         )
         self.assertEqual(
-            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+            WebResource.objects.get(pk=self.webresource_2.id).order, 0
         )
 
 
@@ -1863,7 +1875,7 @@ class UpdateWebResourceAjaxTest(TestCase):
         self.project.save()
 
         response = self._put(
-            {'status': 'wrong'},
+            {'status': 'inactive'},
             self.admin
         )
 
