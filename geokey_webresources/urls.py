@@ -8,6 +8,7 @@ from .views import (
     AddWebResourcePage,
     SingleWebResourcePage,
     RemoveWebResourcePage,
+    ReorderWebResourcesAjax,
     UpdateWebResourceAjax
 )
 
@@ -46,6 +47,11 @@ urlpatterns = [
     # ADMIN AJAX
     # ###########################
 
+    url(
+        r'^ajax/projects/(?P<project_id>[0-9]+)/'
+        r'webresources/reorder/$',
+        ReorderWebResourcesAjax.as_view(),
+        name='ajax_webresources_reorder'),
     url(
         r'^ajax/projects/(?P<project_id>[0-9]+)/'
         r'webresources/(?P<webresource_id>[0-9]+)/$',

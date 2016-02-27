@@ -27,6 +27,7 @@ from ..views import (
     AddWebResourcePage,
     SingleWebResourcePage,
     RemoveWebResourcePage,
+    ReorderWebResourcesAjax,
     UpdateWebResourceAjax
 )
 
@@ -1499,6 +1500,203 @@ class RemoveWebResourcePageTest(TestCase):
             response['location']
         )
         self.assertEqual(WebResource.objects.count(), 1)
+
+
+class ReorderWebResourcesAjaxTest(TestCase):
+    """Test reorder web resources via Ajax."""
+
+    def setUp(self):
+        """Set up test."""
+        self.factory = APIRequestFactory()
+        self.view = ReorderWebResourcesAjax.as_view()
+
+        self.user = UserFactory.create()
+        self.admin = UserFactory.create()
+        self.contributor = UserFactory.create()
+        self.project = ProjectFactory.create(
+            add_admins=[self.admin],
+            add_contributors=[self.contributor]
+        )
+        self.webresource_1 = WebResourceFactory.create(project=self.project)
+        self.webresource_2 = WebResourceFactory.create(project=self.project)
+
+        self.url = reverse(
+            'geokey_webresources:ajax_webresources_reorder',
+            kwargs={
+                'project_id': self.project.id
+            }
+        )
+
+    def _post(self, data, user):
+        """Make test method for POST."""
+        request = self.factory.post(self.url, data)
+        force_authenticate(request, user=user)
+
+        return self.view(
+            request,
+            project_id=self.project.id
+        ).render()
+
+    def test_post_with_anonymous(self):
+        """
+        Test POST with with anonymous.
+
+        It should return 404 response.
+        """
+        response = self._post(
+            {'order': [
+                {self.webresource_2.id: 1},
+                {self.webresource_1.id: 2}
+            ]},
+            AnonymousUser()
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+
+    def test_post_with_user(self):
+        """
+        Test POST with with user.
+
+        It should return 404 response.
+        """
+        response = self._post(
+            {'order': [
+                {self.webresource_2.id: 1},
+                {self.webresource_1.id: 2}
+            ]},
+            self.user
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+
+    def test_post_with_contributor(self):
+        """
+        Test POST with with contributor.
+
+        It should return 403 response.
+        """
+        response = self._post(
+            {'order': [
+                {self.webresource_2.id: 1},
+                {self.webresource_1.id: 2}
+            ]},
+            self.contributor
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+
+    def test_post_with_admin(self):
+        """
+        Test POST with with admin.
+
+        It should return 200 response.
+        """
+        response = self._post(
+            {'order': [
+                {self.webresource_2.id: 1},
+                {self.webresource_1.id: 2}
+            ]},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource.id).status,
+            STATUS.inactive
+        )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 1
+        )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 2
+        )
+
+    def test_put_when_wrong_webresource_id(self):
+        """
+        Test POST with with admin, when web resource ID is wrong.
+
+        It should return 400 response.
+        """
+        response = self._post(
+            {'order': [
+                {self.webresource_2.id: 1},
+                {self.webresource_1.id + 123: 2}
+            ]},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource.id).status,
+            self.webresource.status
+        )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+
+    def test_post_when_no_project(self):
+        """
+        Test POST with with admin, when project does not exist.
+
+        It should return 404 response.
+        """
+        self.project.delete()
+
+        response = self._post(
+            {'order': [
+                {self.webresource_2.id: 1},
+                {self.webresource_1.id: 2}
+            ]},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_post_when_project_is_locked(self):
+        """
+        Test POST with with admin, when project is locked.
+
+        It should return 403 response.
+        """
+        self.project.islocked = True
+        self.project.save()
+
+        response = self._post(
+            {'order': [
+                {self.webresource_2.id: 1},
+                {self.webresource_1.id: 2}
+            ]},
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
+        self.assertEqual(
+            WebResource.objects.get(pk=self.webresource_1.id).order, 0
+        )
 
 
 class UpdateWebResourceAjaxTest(TestCase):

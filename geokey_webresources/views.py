@@ -374,6 +374,62 @@ class RemoveWebResourcePage(WebResourceContext, TemplateView):
         return self.render_to_response(context)
 
 
+class ReorderWebResourcesAjax(APIView):
+    """Reorder web resources via Ajax."""
+
+    @handle_exceptions_for_ajax
+    def post(self, request, project_id):
+        """
+        POST method for reordering web resources.
+
+        Parameters
+        ----------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : int
+            Identifies the project in the database.
+
+        Returns
+        -------
+        rest_framework.response.Response
+            Response to the request.
+        """
+        project = Project.objects.as_admin(request.user, project_id)
+
+        if project.islocked:
+            return Response(
+                {'error': 'The project is locked.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif not project.webresources.exists():
+            return Response(
+                {'error': 'The project has no web resources.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            webresources = []
+
+            for order, webresource_id in enumerate(request.data.get('order')):
+                webresource = project.webresources.get(pk=webresource_id)
+                webresource.order = order
+                webresources.append(webresource)
+
+            for webresource in webresources:
+                webresource.save()
+
+            serializer = WebResourceSerializer(
+                project.webresources,
+                many=True
+            )
+            return Response(serializer.data)
+        except WebResource.DoesNotExist:
+            return Response(
+                {'error': 'One or more web resources were not found.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class UpdateWebResourceAjax(APIView):
     """Update web resource via Ajax."""
 
