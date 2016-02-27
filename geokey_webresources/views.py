@@ -149,7 +149,7 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
         return reverse(
             'geokey_webresources:all_webresources',
             kwargs={
-                'project_id': self.object.project.id
+                'project_id': self.kwargs['project_id']
             }
         )
 
@@ -292,7 +292,7 @@ class SingleWebResourcePage(WebResourceContext, FormView):
         return reverse(
             'geokey_webresources:all_webresources',
             kwargs={
-                'project_id': self.object.project.id
+                'project_id': self.kwargs['project_id']
             }
         )
 
