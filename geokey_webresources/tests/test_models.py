@@ -16,12 +16,7 @@ class WebResourceTest(TestCase):
 
     @raises(WebResource.DoesNotExist)
     def test_delete(self):
-        """
-        Test delete web resource.
-
-        Web resource should still exist, but its status should be set to
-        `deleted`.
-        """
+        """Test delete web resource."""
         webresource = WebResourceFactory.create()
         webresource.delete()
         WebResource.objects.get(pk=webresource.id)
