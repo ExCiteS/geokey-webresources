@@ -1,5 +1,8 @@
 """All views for extension."""
 
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.core.urlresolvers import reverse
 from django.views.generic import CreateView, FormView, TemplateView
 from django.shortcuts import redirect
