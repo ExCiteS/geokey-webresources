@@ -78,3 +78,29 @@ Check code coverage:
     pip install coverage
     coverage run --source=geokey_webresources manage.py test geokey_webresources
     coverage report -m --omit=*/tests/*,*/migrations/*
+
+API
+---
+
+**Get all web resources of a project**
+
+.. code-block:: console
+
+    GET /api/projects/:project_id/webresources/
+
+Response:
+
+.. code-block:: console
+
+    [
+        {
+            "id": 46,
+            "status": "active"
+            "name": "Public Houses"
+            "description": "All public houses in London."
+            "data_format": "KML"
+            "url": "http://london.co.uk/public-houses.kml"
+            "colour": "#000000"
+            "symbol": null
+        }
+    ]
