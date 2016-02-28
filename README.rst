@@ -81,8 +81,8 @@ Check code coverage:
     coverage run --source=geokey_webresources manage.py test geokey_webresources
     coverage report -m --omit=*/tests/*,*/migrations/*
 
-API endpoints
--------------
+Public API
+----------
 
 **Get all web resources of a project**
 
