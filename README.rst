@@ -9,6 +9,8 @@
 geokey-webresources
 ===================
 
+Extend GeoKey projects by adding web resources: GeoJSON, KML or GPX.
+
 Install
 -------
 
@@ -79,8 +81,8 @@ Check code coverage:
     coverage run --source=geokey_webresources manage.py test geokey_webresources
     coverage report -m --omit=*/tests/*,*/migrations/*
 
-API
----
+API endpoints
+-------------
 
 **Get all web resources of a project**
 
