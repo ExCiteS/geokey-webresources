@@ -95,12 +95,12 @@ Response:
     [
         {
             "id": 46,
-            "status": "active"
-            "name": "Public Houses"
-            "description": "All public houses in London."
-            "data_format": "KML"
-            "url": "http://london.co.uk/public-houses.kml"
-            "colour": "#000000"
+            "status": "active",
+            "name": "Public Houses",
+            "description": "All public houses in London.",
+            "data_format": "KML",
+            "url": "http://london.co.uk/public-houses.kml",
+            "colour": "#000000",
             "symbol": null
         }
     ]
