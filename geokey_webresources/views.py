@@ -26,6 +26,10 @@ from .forms import WebResourceForm
 from .serializers import WebResourceSerializer
 
 
+# ###########################
+# ADMIN PAGES
+# ###########################
+
 class IndexPage(LoginRequiredMixin, TemplateView):
     """Main index page."""
 
@@ -374,6 +378,10 @@ class RemoveWebResourcePage(WebResourceContext, TemplateView):
 
         return self.render_to_response(context)
 
+
+# ###########################
+# ADMIN AJAX
+# ###########################
 
 class ReorderWebResourcesAjax(APIView):
     """Reorder web resources via Ajax."""

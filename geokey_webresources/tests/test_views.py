@@ -40,6 +40,10 @@ no_rights_to_access_msg = 'You are not member of the administrators group ' \
                           'alter the settings of the project'
 
 
+# ###########################
+# TESTS FOR ADMIN PAGES
+# ###########################
+
 class IndexPageTest(TestCase):
     """Test index page."""
 
@@ -1523,6 +1527,10 @@ class RemoveWebResourcePageTest(TestCase):
         )
         self.assertEqual(WebResource.objects.count(), 1)
 
+
+# ###########################
+# TESTS FOR ADMIN AJAX
+# ###########################
 
 class ReorderWebResourcesAjaxTest(TestCase):
     """Test reorder web resources via Ajax."""
