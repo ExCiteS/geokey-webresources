@@ -8,7 +8,9 @@ from ..views import (
     AllWebResourcesPage,
     AddWebResourcePage,
     SingleWebResourcePage,
-    RemoveWebResourcePage
+    RemoveWebResourcePage,
+    ReorderWebResourcesAjax,
+    UpdateWebResourceAjax
 )
 
 
@@ -94,6 +96,47 @@ class UrlsTest(TestCase):
         self.assertEqual(
             resolved_url.func.__name__,
             RemoveWebResourcePage.__name__
+        )
+        self.assertEqual(int(resolved_url.kwargs['project_id']), 1)
+        self.assertEqual(int(resolved_url.kwargs['webresource_id']), 5)
+
+    def test_reorder_web_resources_ajax_reverse(self):
+        """Test reverser for reordering web resources Ajax."""
+        reversed_url = reverse(
+            'geokey_webresources:ajax_webresources_reorder',
+            kwargs={'project_id': 1}
+        )
+        self.assertEqual(
+            reversed_url,
+            '/ajax/projects/1/webresources/reorder/'
+        )
+
+    def test_reorder_web_resources_ajax_resolve(self):
+        """Test resolver for reordering web resources Ajax."""
+        resolved_url = resolve('/ajax/projects/1/webresources/reorder/')
+        self.assertEqual(
+            resolved_url.func.__name__,
+            ReorderWebResourcesAjax.__name__
+        )
+        self.assertEqual(int(resolved_url.kwargs['project_id']), 1)
+
+    def test_update_web_resource_ajax_reverse(self):
+        """Test reverser for updating web resource Ajax."""
+        reversed_url = reverse(
+            'geokey_webresources:ajax_webresource_update',
+            kwargs={'project_id': 1, 'webresource_id': 5}
+        )
+        self.assertEqual(
+            reversed_url,
+            '/ajax/projects/1/webresources/5/'
+        )
+
+    def test_update_web_resource_ajax_resolve(self):
+        """Test resolver for updating web resource Ajax."""
+        resolved_url = resolve('/ajax/projects/1/webresources/5/')
+        self.assertEqual(
+            resolved_url.func.__name__,
+            UpdateWebResourceAjax.__name__
         )
         self.assertEqual(int(resolved_url.kwargs['project_id']), 1)
         self.assertEqual(int(resolved_url.kwargs['webresource_id']), 5)
