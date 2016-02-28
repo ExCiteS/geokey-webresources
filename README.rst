@@ -47,6 +47,21 @@ Migrate the models into the database:
 
 You're now ready to go!
 
+Update
+------
+
+Update the geokey-webresources from PyPI:
+
+.. code-block:: console
+
+    pip install -U geokey-webresources
+
+Migrate the new models into the database:
+
+.. code-block:: console
+
+    python manage.py migrate geokey_webresources
+
 Test
 ----
 
