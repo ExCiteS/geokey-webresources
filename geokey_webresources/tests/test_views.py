@@ -21,7 +21,7 @@ from geokey.projects.tests.model_factories import ProjectFactory
 
 from .model_factories import WebResourceFactory
 from ..helpers.context_helpers import does_not_exist_msg
-from ..base import FORMAT, STATUS
+from ..base import STATUS, FORMAT
 from ..models import WebResource
 from ..forms import WebResourceForm
 from ..views import (
@@ -810,6 +810,7 @@ class SingleWebResourcePageTest(TestCase):
                 'user': self.request.user,
                 'messages': get_messages(self.request),
                 'form': form,
+                'status_types': STATUS,
                 'data_formats': FORMAT,
                 'project': self.project,
                 'webresource': self.webresource
@@ -1132,6 +1133,7 @@ class SingleWebResourcePageTest(TestCase):
                 'user': request.user,
                 'messages': get_messages(request),
                 'form': form,
+                'status_types': STATUS,
                 'data_formats': FORMAT,
                 'project': self.project,
                 'webresource': self.webresource
@@ -1277,6 +1279,7 @@ class SingleWebResourcePageTest(TestCase):
                 'user': request.user,
                 'messages': get_messages(request),
                 'form': form,
+                'status_types': STATUS,
                 'data_formats': FORMAT,
                 'project': self.project,
                 'webresource': self.webresource

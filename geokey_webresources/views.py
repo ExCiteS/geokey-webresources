@@ -20,7 +20,7 @@ from geokey.projects.models import Project
 from geokey.projects.views import ProjectContext
 
 from .helpers.context_helpers import does_not_exist_msg
-from .base import FORMAT
+from .base import STATUS, FORMAT
 from .models import WebResource
 from .forms import WebResourceForm
 from .serializers import WebResourceSerializer
@@ -185,6 +185,7 @@ class WebResourceContext(LoginRequiredMixin, ProjectContext):
             **kwargs
         )
 
+        context['status_types'] = STATUS
         context['data_formats'] = FORMAT
 
         try:
