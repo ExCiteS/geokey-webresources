@@ -1693,6 +1693,27 @@ class ReorderWebResourcesAjaxTest(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_post_when_no_webresources(self):
+        """
+        Test POST with with admin, when project has no web resources.
+
+        It should return 404 response.
+        """
+        self.webresource_1.delete()
+        self.webresource_2.delete()
+
+        response = self._post(
+            json.dumps({
+                'order': [
+                    self.webresource_2.id,
+                    self.webresource_1.id
+                ]
+            }),
+            self.admin
+        )
+
+        self.assertEqual(response.status_code, 404)
+
     def test_post_when_project_is_locked(self):
         """
         Test POST with with admin, when project is locked.
