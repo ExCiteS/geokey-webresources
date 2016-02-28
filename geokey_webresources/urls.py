@@ -9,7 +9,8 @@ from .views import (
     SingleWebResourcePage,
     RemoveWebResourcePage,
     ReorderWebResourcesAjax,
-    UpdateWebResourceAjax
+    UpdateWebResourceAjax,
+    AllWebResourcesAPI
 )
 
 
@@ -57,4 +58,14 @@ urlpatterns = [
         r'webresources/(?P<webresource_id>[0-9]+)/$',
         UpdateWebResourceAjax.as_view(),
         name='ajax_webresource_update'),
+
+    # ###########################
+    # PUBLIC API
+    # ###########################
+
+    url(
+        r'^api/projects/(?P<project_id>[0-9]+)/'
+        r'webresources/$',
+        AllWebResourcesAPI.as_view(),
+        name='api_all_webresources')
 ]

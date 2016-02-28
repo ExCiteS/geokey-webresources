@@ -31,7 +31,8 @@ from ..views import (
     SingleWebResourcePage,
     RemoveWebResourcePage,
     ReorderWebResourcesAjax,
-    UpdateWebResourceAjax
+    UpdateWebResourceAjax,
+    AllWebResourcesAPI
 )
 
 
@@ -1921,3 +1922,87 @@ class UpdateWebResourceAjaxTest(TestCase):
             WebResource.objects.get(pk=self.webresource.id).status,
             self.webresource.status
         )
+
+
+# ###########################
+# TESTS FOR PUBLIC API
+# ###########################
+
+class AllWebResourcesAPITest(TestCase):
+    """Test all web resources API."""
+
+    def setUp(self):
+        """Set up test."""
+        self.factory = APIRequestFactory()
+        self.view = AllWebResourcesAPI.as_view()
+
+        self.user = UserFactory.create()
+        self.admin = UserFactory.create()
+        self.contributor = UserFactory.create()
+        self.project = ProjectFactory.create(
+            add_admins=[self.admin],
+            add_contributors=[self.contributor]
+        )
+        self.webresource_1 = WebResourceFactory.create(
+            status=STATUS.active,
+            project=self.project
+        )
+        self.webresource_2 = WebResourceFactory.create(
+            status=STATUS.inactive,
+            project=self.project
+        )
+
+        self.url = reverse(
+            'geokey_webresources:api_all_webresources',
+            kwargs={
+                'project_id': self.project.id
+            }
+        )
+
+    def _get(self, user):
+        """Make test method for GET."""
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=user)
+
+        return self.view(
+            request,
+            project_id=self.project.id
+        ).render()
+
+    def test_get_with_user(self):
+        """
+        Test GET with with user.
+
+        It should return 404 response.
+        """
+        response = self._get(self.user)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_with_contributor(self):
+        """
+        Test GET with with contributor.
+
+        It should return 200 response.
+        """
+        response = self._get(self.contributor)
+
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content)
+        self.assertEqual(len(content), 1)
+        self.assertEqual(content[0]['id'], self.webresource_1.id)
+
+    def test_get_with_admin(self):
+        """
+        Test GET with with admin.
+
+        It should return 200 response.
+        """
+        response = self._get(self.admin)
+
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content)
+        self.assertEqual(len(content), 1)
+        self.assertEqual(content[0]['id'], self.webresource_1.id)
