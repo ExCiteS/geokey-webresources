@@ -1,6 +1,16 @@
 <div class="page-header">
     <div class="container">
-        <h1>Web Resources</h1>
+        {% if project %}
+            {% if request.resolver_match.url_name == 'all_webresources' %}
+                <h1>{{ project.name }}</h1>
+            {% else %}
+                <h1 class="smaller">
+                    <a href="{% url 'geokey_webresources:all_webresources' project.id %}">{{ project.name }}</a>
+                </h1>
+            {% endif %}
+        {% else %}
+            <h1>Web Resources</h1>
+        {% endif %}
     </div>
 </div>
 

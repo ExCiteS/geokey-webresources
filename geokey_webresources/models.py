@@ -26,8 +26,9 @@ class WebResource(StatusModel, TimeStampedModel):
     colour = models.TextField(default='#0033ff')
     symbol = models.ImageField(
         upload_to='webresources/symbols',
+        max_length=500,
         null=True,
-        max_length=500
+        blank=True
     )
 
     project = models.ForeignKey(
@@ -44,28 +45,13 @@ class WebResource(StatusModel, TimeStampedModel):
         ordering = ['order']
 
     def delete(self):
-        """
-        Delete the web resource by setting its status to `deleted`.
-
-        Notes
-        -----
-        It also deletes all contributions of that category.
-        """
+        """Delete the web resource by setting its status to `deleted`."""
         self.status = self.STATUS.deleted
         self.save()
 
 
 @receiver(models.signals.post_save, sender=Project)
 def post_save_project(sender, instance, **kwargs):
-    """
-    Change status of web imports according to project's status.
-
-    If project is set to `inactive`, make web resources `inactive` too. And if
-    project is deleted, delete associated web resources.
-    """
-    webresources = WebResource.objects.filter(project=instance)
-
-    if instance.status == 'inactive':
-        webresources.update(status=WebResource.STATUS.inactive)
-    elif instance.status == 'deleted':
-        webresources.delete()
+    """Remove associated web resources when the project gets deleted."""
+    if instance.status == 'deleted':
+        WebResource.objects.filter(project=instance).delete()
