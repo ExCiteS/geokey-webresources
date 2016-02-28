@@ -42,13 +42,15 @@ data-project-locked="{{ project.islocked }}"
                         {% if webresource.status == 'inactive' %}<small><span class="label label-default">Inactive</span></small>{% endif %}
                     </h4>
 
-                    <p class="meta">
+                    <p class="meta" style="padding-bottom: 10px">
                         <span class="lower-case">{{ webresource.data_format }}</span>
                         <span>URL:</span>
                         <a href="{{ webresource.url }}" target="_blank"><span class="lower-case">{{ webresource.url }}</span></a>
                     </p>
 
-                    {% if webresource.description %}<p class="description" style="padding-top: 10px">{{ webresource.description }}</p>{% endif %}
+                    {% if webresource.description %}<p class="description">{{ webresource.description }}</p>{% endif %}
+
+                    <p class="meta">Added by {{ webresource.creator }} {{ webresource.created|timesince }} ago</p>
                 </li>
 
                 {% if forloop.last %}
