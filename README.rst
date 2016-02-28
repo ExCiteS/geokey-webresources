@@ -9,6 +9,8 @@
 geokey-webresources
 ===================
 
+Extend GeoKey projects by adding web resources: GeoJSON, KML or GPX.
+
 Install
 -------
 
@@ -47,6 +49,21 @@ Migrate the models into the database:
 
 You're now ready to go!
 
+Update
+------
+
+Update the geokey-webresources from PyPI:
+
+.. code-block:: console
+
+    pip install -U geokey-webresources
+
+Migrate the new models into the database:
+
+.. code-block:: console
+
+    python manage.py migrate geokey_webresources
+
 Test
 ----
 
@@ -60,5 +77,32 @@ Check code coverage:
 
 .. code-block:: console
 
+    pip install coverage
     coverage run --source=geokey_webresources manage.py test geokey_webresources
     coverage report -m --omit=*/tests/*,*/migrations/*
+
+API endpoints
+-------------
+
+**Get all web resources of a project**
+
+.. code-block:: console
+
+    GET /api/projects/:project_id/webresources/
+
+Response:
+
+.. code-block:: console
+
+    [
+        {
+            "id": 46,
+            "status": "active",
+            "name": "Public Houses",
+            "description": "All public houses in London.",
+            "data_format": "KML",
+            "url": "http://london.co.uk/public-houses.kml",
+            "colour": "#000000",
+            "symbol": null
+        }
+    ]

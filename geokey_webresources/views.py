@@ -26,6 +26,10 @@ from .forms import WebResourceForm
 from .serializers import WebResourceSerializer
 
 
+# ###########################
+# ADMIN PAGES
+# ###########################
+
 class IndexPage(LoginRequiredMixin, TemplateView):
     """Main index page."""
 
@@ -375,6 +379,10 @@ class RemoveWebResourcePage(WebResourceContext, TemplateView):
         return self.render_to_response(context)
 
 
+# ###########################
+# ADMIN AJAX
+# ###########################
+
 class ReorderWebResourcesAjax(APIView):
     """Reorder web resources via Ajax."""
 
@@ -486,3 +494,35 @@ class UpdateWebResourceAjax(APIView):
                 {'error': str(error)},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+# ###########################
+# PUBLIC API
+# ###########################
+
+class AllWebResourcesAPI(APIView):
+    """All web resources API."""
+
+    @handle_exceptions_for_ajax
+    def get(self, request, project_id):
+        """
+        GET method for all web resources of a project.
+
+        Parameters
+        ----------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : int
+            Identifies the project in the database.
+
+        Returns
+        -------
+        rest_framework.response.Response
+            Response to the request.
+        """
+        project = Project.objects.get_single(request.user, project_id)
+        serializer = WebResourceSerializer(
+            project.webresources.filter(status=STATUS.active),
+            many=True
+        )
+        return Response(serializer.data)
