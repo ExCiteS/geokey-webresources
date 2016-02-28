@@ -75,5 +75,6 @@ Check code coverage:
 
 .. code-block:: console
 
+    pip install coverage
     coverage run --source=geokey_webresources manage.py test geokey_webresources
     coverage report -m --omit=*/tests/*,*/migrations/*
