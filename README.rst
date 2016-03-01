@@ -1,3 +1,7 @@
+.. image:: https://img.shields.io/pypi/v/geokey-webresources.svg
+    :alt: PyPI Package
+    :target: https://pypi.python.org/pypi/geokey-webresources
+
 .. image:: https://img.shields.io/travis/ExCiteS/geokey-webresources/master.svg
     :alt: Travis CI Build Status
     :target: https://travis-ci.org/ExCiteS/geokey-webresources
