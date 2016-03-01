@@ -2013,7 +2013,8 @@ class AllWebResourcesAPITest(TestCase):
 
         It should return 200 response.
         """
-        self.webresource.delete()
+        self.webresource_1.delete()
+        self.webresource_2.delete()
 
         response = self._get(self.contributor)
         self.assertEqual(response.status_code, 200)
