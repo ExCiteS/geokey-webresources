@@ -43,3 +43,12 @@ script:
 
 after_success:
   - coveralls
+
+deploy:
+  provider: pypi
+  user: excites
+  password:
+    secure: YF+k347oHpj8LraU2txBo39ksza2DxX6MoJvEMImF6o6ChPVm3A08LE/XKEY1H60cmItSAMamuIGmH79PK8UVE8YDVrYqMtrCmR7obi75z4rQd4rMmLBllDbPShUTjVyrqu9Ud3ldrjMo5pf+YY/LifJAvoMbYWr0DAGgwMVKO2VDJAArYxVGl/iowCPiogxV8Vj/OzGvuagTsZZGzVoY9eT5wHiPWNNT9pxXLmRDG6QT71di03G1bQft55WEHf4ilwezSedXnHV4Jbc6WqFz27mivjx/ElNrpJq93Fac5qNhE1UiBJNC52INfTLoF+/zdVwdvKmxbb2XFaIH4KEUp816V/ZkBQoAdm6UgQNyH1M+dW7XUxw5hTR0R1gHZs7UUCPYK77YJ45W/uSdGzTG3M0as44+cFHf84dGHYTRZwO03SAvU5oBzLtJYTK9dFRb5S1Mywd0eI/gLjHW9ZAmEAkL7laQ+7ewT1e8s7qvq3pbFanH85LSWxTzfaLy1wVi0RJL1ENUFAq5hx8cBK1tnAJNSS3aibxmgj1zE8NCbLQcLn+1OPS0JM12HsG/ioJZKQcGHhwkMQkRwQF0Bdxq8zd3ARNZFm/gmAx2WiyCyWPuEwNaX4AGXa3ktKheq8q5UstycF4vcdNwiHaRAtpKfc171FtSz4VTgWbptzH1yo=
+  on:
+    tags: true
+    branch: master
