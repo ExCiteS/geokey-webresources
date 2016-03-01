@@ -106,3 +106,24 @@ Response:
             "symbol": null
         }
     ]
+
+**Get a single web resource of a project**
+
+.. code-block:: console
+
+    GET /api/projects/:project_id/webresources/:webresource_id/
+
+Response:
+
+.. code-block:: console
+
+    {
+        "id": 46,
+        "status": "active",
+        "name": "Train Stations",
+        "description": "Train stations in Germany.",
+        "data_format": "GeoJSON",
+        "url": "https://germany.de/all-train-stations.geojson",
+        "colour": "#ffc0cb",
+        "symbol": '/media/webresources/symbols/train_stations.png'
+    }

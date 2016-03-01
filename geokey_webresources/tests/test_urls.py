@@ -11,7 +11,8 @@ from ..views import (
     RemoveWebResourcePage,
     ReorderWebResourcesAjax,
     UpdateWebResourceAjax,
-    AllWebResourcesAPI
+    AllWebResourcesAPI,
+    SingleWebResourceAPI
 )
 
 
@@ -161,3 +162,21 @@ class UrlsTest(TestCase):
             AllWebResourcesAPI.__name__
         )
         self.assertEqual(int(resolved_url.kwargs['project_id']), 1)
+
+    def test_single_web_resource_api_reverse(self):
+        """Test reverser for single web resource API."""
+        reversed_url = reverse(
+            'geokey_webresources:api_single_webresource',
+            kwargs={'project_id': 1, 'webresource_id': 5}
+        )
+        self.assertEqual(reversed_url, '/api/projects/1/webresources/5/')
+
+    def test_single_web_resource_api_resolve(self):
+        """Test resolver for single web resource API."""
+        resolved_url = resolve('/api/projects/1/webresources/5/')
+        self.assertEqual(
+            resolved_url.func.__name__,
+            SingleWebResourceAPI.__name__
+        )
+        self.assertEqual(int(resolved_url.kwargs['project_id']), 1)
+        self.assertEqual(int(resolved_url.kwargs['webresource_id']), 5)

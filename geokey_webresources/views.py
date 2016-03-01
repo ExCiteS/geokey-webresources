@@ -526,3 +526,44 @@ class AllWebResourcesAPI(APIView):
             many=True
         )
         return Response(serializer.data)
+
+
+class SingleWebResourceAPI(APIView):
+    """Single web resource API."""
+
+    @handle_exceptions_for_ajax
+    def get(self, request, project_id, webresource_id):
+        """
+        GET method for a single web resource of a project.
+
+        Only active web resources are returned to anyone who has access to the
+        project.
+
+        Parameters
+        ----------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : int
+            Identifies the project in the database.
+        webresource_id : int
+            Identifies the web resource in the database.
+
+        Returns
+        -------
+        rest_framework.response.Response
+            Response to the request.
+        """
+        project = Project.objects.get_single(request.user, project_id)
+
+        try:
+            webresource = project.webresources.get(
+                pk=webresource_id,
+                status=STATUS.active
+            )
+            serializer = WebResourceSerializer(webresource)
+            return Response(serializer.data)
+        except WebResource.DoesNotExist:
+            return Response(
+                {'error': 'Web resource not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )

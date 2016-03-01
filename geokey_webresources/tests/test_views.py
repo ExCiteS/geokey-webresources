@@ -32,7 +32,8 @@ from ..views import (
     RemoveWebResourcePage,
     ReorderWebResourcesAjax,
     UpdateWebResourceAjax,
-    AllWebResourcesAPI
+    AllWebResourcesAPI,
+    SingleWebResourceAPI
 )
 
 
@@ -2006,3 +2007,117 @@ class AllWebResourcesAPITest(TestCase):
         content = json.loads(response.content)
         self.assertEqual(len(content), 1)
         self.assertEqual(content[0]['id'], self.webresource_1.id)
+
+
+class SingleWebResourceAPITest(TestCase):
+    """Test single web resource API."""
+
+    def setUp(self):
+        """Set up test."""
+        self.factory = APIRequestFactory()
+        self.view = SingleWebResourceAPI.as_view()
+
+        self.user = UserFactory.create()
+        self.contributor = UserFactory.create()
+        self.admin = UserFactory.create()
+
+        self.project = ProjectFactory.create(
+            add_admins=[self.admin],
+            add_contributors=[self.contributor]
+        )
+        self.webresource = WebResourceFactory.create(
+            status=STATUS.active,
+            project=self.project
+        )
+
+        self.url = reverse(
+            'geokey_webresources:api_single_webresource',
+            kwargs={
+                'project_id': self.project.id,
+                'webresource_id': self.webresource.id
+            }
+        )
+
+    def _get(self, user):
+        """Make test GET method."""
+        request = self.factory.get(self.url)
+        force_authenticate(request, user=user)
+
+        return self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+    def test_get_with_user(self):
+        """
+        Test GET with user.
+
+        Project is private and not everyone can contribute to it by default.
+
+        It should return 404 response.
+        """
+        response = self._get(self.user)
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_with_contributor(self):
+        """
+        Test GET with contributor.
+
+        Contributors can access active web resources.
+
+        It should return 200 response.
+        """
+        response = self._get(self.contributor)
+
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content)
+        self.assertEqual(content['id'], self.webresource.id)
+
+    def test_get_with_admin(self):
+        """
+        Test GET with admin.
+
+        Admins can access active web resources.
+
+        It should return 200 response.
+        """
+        response = self._get(self.admin)
+
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content)
+        self.assertEqual(content['id'], self.webresource.id)
+
+    def test_get_when_no_webresource(self):
+        """
+        Test GET with contributor and admin.
+
+        It should return 404 response.
+        """
+        self.webresource.delete()
+
+        response = self._get(self.contributor)
+        self.assertEqual(response.status_code, 404)
+
+        response = self._get(self.admin)
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_when_webresource_is_inactive(self):
+        """
+        Test GET with contributor and  admin.
+
+        Inactive web resources cannot be accessed.
+
+        It should return 404 response.
+        """
+        self.webresource.status = STATUS.inactive
+        self.webresource.save()
+
+        response = self._get(self.contributor)
+        self.assertEqual(response.status_code, 404)
+
+        response = self._get(self.admin)
+        self.assertEqual(response.status_code, 404)
