@@ -90,7 +90,17 @@ Public API
 
     GET /api/projects/:project_id/webresources/
 
-Response:
+*Request parameters:*
+
+==========  ======= ====================================
+Parameter   Type    Description
+==========  ======= ====================================
+project_id  Integer A unique identifier for the project.
+==========  ======= ====================================
+
+*Response:*
+
+The response contains an array of web resources. If the array is empty, then the project has no active web resources.
 
 .. code-block:: console
 
@@ -107,13 +117,31 @@ Response:
         }
     ]
 
+*Response status codes:*
+
+==== ========================================================
+Code Reason
+==== ========================================================
+200  The list of projects has been returned successfully.
+404  The project was not found (or user has no access to it).
+==== ========================================================
+
 **Get a single web resource of a project**
 
 .. code-block:: console
 
     GET /api/projects/:project_id/webresources/:webresource_id/
 
-Response:
+*Request parameters:*
+
+==============  ======= =========================================
+Parameter       Type    Description
+==============  ======= =========================================
+project_id      Integer A unique identifier for the project.
+webresource_id  Integer A unique identifier for the web resource.
+==============  ======= =========================================
+
+*Response:*
 
 .. code-block:: console
 
@@ -127,3 +155,12 @@ Response:
         "colour": "#ffc0cb",
         "symbol": '/media/webresources/symbols/train_stations.png'
     }
+
+*Response status codes:*
+
+==== ====================================================
+Code Reason
+==== ====================================================
+200  The list of projects has been returned successfully.
+404  The project or web resource was not found.
+==== ====================================================
