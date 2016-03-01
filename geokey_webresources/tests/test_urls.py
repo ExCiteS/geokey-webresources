@@ -19,6 +19,10 @@ from ..views import (
 class UrlsTest(TestCase):
     """Test all URLs."""
 
+    # ###########################
+    # TEST ADMIN PAGES
+    # ###########################
+
     def test_index_page_reverse(self):
         """Test reverser for index page."""
         reversed_url = reverse('geokey_webresources:index')
@@ -102,6 +106,10 @@ class UrlsTest(TestCase):
         self.assertEqual(int(resolved_url.kwargs['project_id']), 1)
         self.assertEqual(int(resolved_url.kwargs['webresource_id']), 5)
 
+    # ###########################
+    # TEST ADMIN AJAX
+    # ###########################
+
     def test_reorder_web_resources_ajax_reverse(self):
         """Test reverser for reordering web resources Ajax."""
         reversed_url = reverse(
@@ -142,6 +150,10 @@ class UrlsTest(TestCase):
         )
         self.assertEqual(int(resolved_url.kwargs['project_id']), 1)
         self.assertEqual(int(resolved_url.kwargs['webresource_id']), 5)
+
+    # ###########################
+    # TEST PUBLIC API
+    # ###########################
 
     def test_all_web_resources_api_reverse(self):
         """Test reverser for all web resources API."""

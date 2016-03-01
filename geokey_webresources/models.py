@@ -1,4 +1,4 @@
-"""All models for extension."""
+"""All models for the extension."""
 
 from django.conf import settings
 from django.dispatch import receiver

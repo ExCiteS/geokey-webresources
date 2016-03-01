@@ -1,4 +1,4 @@
-"""All views for extension."""
+"""All views for the extension."""
 
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
@@ -156,7 +156,7 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
 
         Returns
         -------
-        string
+        str
             URL for redirection.
         """
         return reverse(
@@ -177,6 +177,13 @@ class WebResourceContext(LoginRequiredMixin, ProjectContext):
         Return the context to render the view. Overwrite the method by adding
         a web resource and available status types & data formats to the
         context.
+
+        Parameters
+        ----------
+        project_id : int
+            Identifies the project in the database.
+        webresource_id : int
+            Identifies the web resource in the database.
 
         Returns
         -------
@@ -313,7 +320,7 @@ class SingleWebResourcePage(WebResourceContext, FormView):
 
         Returns
         -------
-        string
+        str
             URL for redirection.
         """
         return reverse(
@@ -366,7 +373,6 @@ class RemoveWebResourcePage(WebResourceContext, TemplateView):
                 )
             else:
                 webresource.delete()
-
                 messages.success(
                     request,
                     'The web resource has been removed.'
@@ -407,12 +413,12 @@ class ReorderWebResourcesAjax(APIView):
 
         if project.islocked:
             return Response(
-                {'error': 'The project is locked.'},
+                {'error': 'Project is locked.'},
                 status=status.HTTP_403_FORBIDDEN
             )
         elif not project.webresources.exists():
             return Response(
-                {'error': 'The project has no web resources.'},
+                {'error': 'Project has no web resources.'},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -465,15 +471,12 @@ class UpdateWebResourceAjax(APIView):
 
         if project.islocked:
             return Response(
-                {'error': 'The project is locked.'},
+                {'error': 'Project is locked.'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
         try:
-            webresource = WebResource.objects.get(
-                pk=webresource_id,
-                project=project
-            )
+            webresource = project.webresources.get(pk=webresource_id)
             serializer = WebResourceSerializer(
                 webresource,
                 data=request.data,
@@ -501,7 +504,7 @@ class UpdateWebResourceAjax(APIView):
 # ###########################
 
 class AllWebResourcesAPI(APIView):
-    """All web resources API."""
+    """All web resources via API."""
 
     @handle_exceptions_for_ajax
     def get(self, request, project_id):
@@ -529,7 +532,7 @@ class AllWebResourcesAPI(APIView):
 
 
 class SingleWebResourceAPI(APIView):
-    """Single web resource API."""
+    """Single web resource via API."""
 
     @handle_exceptions_for_ajax
     def get(self, request, project_id, webresource_id):

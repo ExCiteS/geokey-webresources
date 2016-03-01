@@ -1,4 +1,4 @@
-"""All managers for extension."""
+"""All managers for the extension."""
 
 from django.db import models
 

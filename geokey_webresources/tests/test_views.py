@@ -115,8 +115,9 @@ class AllWebResourcesPageTest(TestCase):
         self.view = AllWebResourcesPage.as_view()
 
         self.user = UserFactory.create()
-        self.admin = UserFactory.create()
         self.contributor = UserFactory.create()
+        self.admin = UserFactory.create()
+
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor]
@@ -261,8 +262,9 @@ class AddWebResourcePageTest(TestCase):
         self.view = AddWebResourcePage.as_view()
 
         self.user = UserFactory.create()
-        self.admin = UserFactory.create()
         self.contributor = UserFactory.create()
+        self.admin = UserFactory.create()
+
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor]
@@ -671,8 +673,9 @@ class SingleWebResourcePageTest(TestCase):
         self.view = SingleWebResourcePage.as_view()
 
         self.user = UserFactory.create()
-        self.admin = UserFactory.create()
         self.contributor = UserFactory.create()
+        self.admin = UserFactory.create()
+
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor]
@@ -1317,8 +1320,9 @@ class RemoveWebResourcePageTest(TestCase):
         self.view = RemoveWebResourcePage.as_view()
 
         self.user = UserFactory.create()
-        self.admin = UserFactory.create()
         self.contributor = UserFactory.create()
+        self.admin = UserFactory.create()
+
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor]
@@ -1543,8 +1547,9 @@ class ReorderWebResourcesAjaxTest(TestCase):
         self.view = ReorderWebResourcesAjax.as_view()
 
         self.user = UserFactory.create()
-        self.admin = UserFactory.create()
         self.contributor = UserFactory.create()
+        self.admin = UserFactory.create()
+
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor]
@@ -1560,7 +1565,7 @@ class ReorderWebResourcesAjaxTest(TestCase):
         )
 
     def _post(self, data, user):
-        """Make test method for POST."""
+        """Make test POST method."""
         request = self.factory.post(
             self.url,
             data,
@@ -1588,7 +1593,6 @@ class ReorderWebResourcesAjaxTest(TestCase):
             }),
             AnonymousUser()
         )
-
         self.assertEqual(response.status_code, 404)
 
         reference = self.project.webresources.all()
@@ -1610,7 +1614,6 @@ class ReorderWebResourcesAjaxTest(TestCase):
             }),
             self.user
         )
-
         self.assertEqual(response.status_code, 404)
 
         reference = self.project.webresources.all()
@@ -1632,7 +1635,6 @@ class ReorderWebResourcesAjaxTest(TestCase):
             }),
             self.contributor
         )
-
         self.assertEqual(response.status_code, 403)
 
         reference = self.project.webresources.all()
@@ -1654,7 +1656,6 @@ class ReorderWebResourcesAjaxTest(TestCase):
             }),
             self.admin
         )
-
         self.assertEqual(response.status_code, 200)
 
         reference = self.project.webresources.all()
@@ -1676,7 +1677,6 @@ class ReorderWebResourcesAjaxTest(TestCase):
             }),
             self.admin
         )
-
         self.assertEqual(response.status_code, 400)
 
         reference = self.project.webresources.all()
@@ -1700,7 +1700,6 @@ class ReorderWebResourcesAjaxTest(TestCase):
             }),
             self.admin
         )
-
         self.assertEqual(response.status_code, 404)
 
     def test_post_when_no_webresources(self):
@@ -1721,7 +1720,6 @@ class ReorderWebResourcesAjaxTest(TestCase):
             }),
             self.admin
         )
-
         self.assertEqual(response.status_code, 404)
 
     def test_post_when_project_is_locked(self):
@@ -1742,7 +1740,6 @@ class ReorderWebResourcesAjaxTest(TestCase):
             }),
             self.admin
         )
-
         self.assertEqual(response.status_code, 403)
 
         reference = self.project.webresources.all()
@@ -1759,8 +1756,9 @@ class UpdateWebResourceAjaxTest(TestCase):
         self.view = UpdateWebResourceAjax.as_view()
 
         self.user = UserFactory.create()
-        self.admin = UserFactory.create()
         self.contributor = UserFactory.create()
+        self.admin = UserFactory.create()
+
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor]
@@ -1779,7 +1777,7 @@ class UpdateWebResourceAjaxTest(TestCase):
         )
 
     def _put(self, data, user):
-        """Make test method for PUT."""
+        """Make test PUT method."""
         request = self.factory.put(self.url, data)
         force_authenticate(request, user=user)
 
@@ -1799,7 +1797,6 @@ class UpdateWebResourceAjaxTest(TestCase):
             {'status': 'inactive'},
             AnonymousUser()
         )
-
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             WebResource.objects.get(pk=self.webresource.id).status,
@@ -1816,7 +1813,6 @@ class UpdateWebResourceAjaxTest(TestCase):
             {'status': 'inactive'},
             self.user
         )
-
         self.assertEqual(response.status_code, 404)
         self.assertEqual(
             WebResource.objects.get(pk=self.webresource.id).status,
@@ -1833,7 +1829,6 @@ class UpdateWebResourceAjaxTest(TestCase):
             {'status': 'inactive'},
             self.contributor
         )
-
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
             WebResource.objects.get(pk=self.webresource.id).status,
@@ -1850,7 +1845,6 @@ class UpdateWebResourceAjaxTest(TestCase):
             {'status': 'inactive'},
             self.admin
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             WebResource.objects.get(pk=self.webresource.id).status,
@@ -1867,7 +1861,6 @@ class UpdateWebResourceAjaxTest(TestCase):
             {'status': 'wrong'},
             self.admin
         )
-
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             WebResource.objects.get(pk=self.webresource.id).status,
@@ -1886,7 +1879,6 @@ class UpdateWebResourceAjaxTest(TestCase):
             {'status': 'inactive'},
             self.admin
         )
-
         self.assertEqual(response.status_code, 404)
 
     def test_put_when_no_webresource(self):
@@ -1901,7 +1893,6 @@ class UpdateWebResourceAjaxTest(TestCase):
             {'status': 'inactive'},
             self.admin
         )
-
         self.assertEqual(response.status_code, 404)
 
     def test_put_when_project_is_locked(self):
@@ -1917,7 +1908,6 @@ class UpdateWebResourceAjaxTest(TestCase):
             {'status': 'inactive'},
             self.admin
         )
-
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
             WebResource.objects.get(pk=self.webresource.id).status,
@@ -1930,7 +1920,7 @@ class UpdateWebResourceAjaxTest(TestCase):
 # ###########################
 
 class AllWebResourcesAPITest(TestCase):
-    """Test all web resources API."""
+    """Test all web resources via API."""
 
     def setUp(self):
         """Set up test."""
@@ -1938,8 +1928,9 @@ class AllWebResourcesAPITest(TestCase):
         self.view = AllWebResourcesAPI.as_view()
 
         self.user = UserFactory.create()
-        self.admin = UserFactory.create()
         self.contributor = UserFactory.create()
+        self.admin = UserFactory.create()
+
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor]
@@ -1961,7 +1952,7 @@ class AllWebResourcesAPITest(TestCase):
         )
 
     def _get(self, user):
-        """Make test method for GET."""
+        """Make test GET method."""
         request = self.factory.get(self.url)
         force_authenticate(request, user=user)
 
@@ -1974,20 +1965,23 @@ class AllWebResourcesAPITest(TestCase):
         """
         Test GET with with user.
 
+        Project is private and not everyone can contribute to it by default.
+
         It should return 404 response.
         """
         response = self._get(self.user)
-
         self.assertEqual(response.status_code, 404)
 
     def test_get_with_contributor(self):
         """
         Test GET with with contributor.
 
+        Contributors can access active web resources, but only active web
+        resources should be included.
+
         It should return 200 response.
         """
         response = self._get(self.contributor)
-
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content)
@@ -1998,19 +1992,44 @@ class AllWebResourcesAPITest(TestCase):
         """
         Test GET with with admin.
 
+        Admins can access active web resources, but only active web resources
+        should be included.
+
         It should return 200 response.
         """
         response = self._get(self.admin)
-
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content)
         self.assertEqual(len(content), 1)
         self.assertEqual(content[0]['id'], self.webresource_1.id)
 
+    def test_get_when_no_webresources(self):
+        """
+        Test GET with contributor and admin.
+
+        Even when there are no web resources, an empty array should be still
+        returned.
+
+        It should return 200 response.
+        """
+        self.webresource.delete()
+
+        response = self._get(self.contributor)
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content)
+        self.assertEqual(len(content), 0)
+
+        response = self._get(self.admin)
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content)
+        self.assertEqual(len(content), 0)
+
 
 class SingleWebResourceAPITest(TestCase):
-    """Test single web resource API."""
+    """Test single web resource via API."""
 
     def setUp(self):
         """Set up test."""
@@ -2058,7 +2077,6 @@ class SingleWebResourceAPITest(TestCase):
         It should return 404 response.
         """
         response = self._get(self.user)
-
         self.assertEqual(response.status_code, 404)
 
     def test_get_with_contributor(self):
@@ -2070,7 +2088,6 @@ class SingleWebResourceAPITest(TestCase):
         It should return 200 response.
         """
         response = self._get(self.contributor)
-
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content)
@@ -2085,7 +2102,6 @@ class SingleWebResourceAPITest(TestCase):
         It should return 200 response.
         """
         response = self._get(self.admin)
-
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content)
@@ -2107,7 +2123,7 @@ class SingleWebResourceAPITest(TestCase):
 
     def test_get_when_webresource_is_inactive(self):
         """
-        Test GET with contributor and  admin.
+        Test GET with contributor and admin.
 
         Inactive web resources cannot be accessed.
 

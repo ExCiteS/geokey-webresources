@@ -1,4 +1,4 @@
-"""All model factories."""
+"""All model factories for tests."""
 
 import factory
 
@@ -18,7 +18,6 @@ class WebResourceFactory(factory.django.DjangoModelFactory):
     description = factory.LazyAttribute(lambda o: '%s description.' % o.name)
     data_format = 'GeoJSON'
     url = factory.Sequence(lambda n: 'https://domain.com/%d.json' % n)
-    symbol = None
 
     project = factory.SubFactory(ProjectFactory)
     creator = factory.SubFactory(UserFactory)

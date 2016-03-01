@@ -1,4 +1,4 @@
-"""Base for extension."""
+"""Base for the extension."""
 
 from model_utils import Choices
 

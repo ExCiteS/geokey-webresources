@@ -1,4 +1,4 @@
-"""All serializers for extension."""
+"""All serializers for the extension."""
 
 from rest_framework.serializers import SerializerMethodField
 
@@ -8,7 +8,7 @@ from .models import WebResource
 
 
 class WebResourceSerializer(FieldSelectorSerializer):
-    """Serializer for web resource."""
+    """Serializer for a web resource."""
 
     symbol = SerializerMethodField()
 
@@ -30,5 +30,5 @@ class WebResourceSerializer(FieldSelectorSerializer):
         """Serializer meta."""
 
         model = WebResource
-        fields = ('id', 'status', 'name', 'description', 'data_format', 'url',
-                  'colour', 'symbol')
+        fields = ('id', 'status', 'name', 'description', 'created', 'modified',
+                  'data_format', 'url', 'colour', 'symbol')

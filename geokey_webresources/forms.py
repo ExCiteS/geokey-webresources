@@ -1,4 +1,4 @@
-"""All forms for extension."""
+"""All forms for the extension."""
 
 from django.forms import ModelForm
 

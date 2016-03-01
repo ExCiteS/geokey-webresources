@@ -23,7 +23,7 @@ class WebResourceTest(TestCase):
 
 
 class PostSaveProjectTest(TestCase):
-    """Test post save of project."""
+    """Test post save for project."""
 
     @raises(WebResource.DoesNotExist)
     def test_post_save_project_when_deleting(self):
