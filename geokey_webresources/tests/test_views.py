@@ -689,7 +689,7 @@ class SingleWebResourcePageTest(TestCase):
             'url': 'http://big-data.org.uk/test.kml',
             'colour': '#000000',
             'symbol': image_helpers.get_image(file_name='test_symbol.png'),
-            'clear-symbol': 'false'
+            'symbol_clear': 'false'
         }
         self.url = reverse(
             'geokey_webresources:single_webresource',
@@ -1077,7 +1077,7 @@ class SingleWebResourcePageTest(TestCase):
 
         symbol = self.webresource.symbol.path
 
-        self.data['clear-symbol'] = 'true'
+        self.data['symbol_clear'] = 'true'
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 

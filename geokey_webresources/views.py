@@ -285,7 +285,7 @@ class SingleWebResourcePage(WebResourceContext, FormView):
                     'The project is locked. Web resources cannot be updated.'
                 )
             else:
-                if self.request.POST.get('clear-symbol') == 'true':
+                if self.request.POST.get('symbol_clear') == 'true':
                     form.instance.symbol = None
                 form.save()
 

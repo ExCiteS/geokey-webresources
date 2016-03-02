@@ -16,7 +16,7 @@ data-webresource-id="{{ webresource.id }}"
         <form role="form" id="form" class="col-md-8 col-md-offset-2" method="POST" action="{% url 'geokey_webresources:single_webresource' project.id webresource.id %}" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
 
-            <input type="hidden" name="clear-symbol" id="symbol-clear" value="false" />
+            <input type="hidden" id="symbol-clear" name="symbol_clear" value="false" />
 
             <h3 class="header">
                 {% if project.islocked %}<span class="glyphicon glyphicon-lock text-warning" aria-hidden="true"></span>{% endif %}
