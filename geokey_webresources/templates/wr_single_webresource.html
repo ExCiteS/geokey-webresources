@@ -36,8 +36,8 @@ data-webresource-id="{{ webresource.id }}"
             </div>
 
             <div class="form-group {% if form.errors.data_format %}has-error{% endif %}">
-                <label for="data_format" class="control-label">Data format (required)</label>
-                <select id="data_format" class="form-control" name="data_format" required>
+                <label for="data-format" class="control-label">Data format (required)</label>
+                <select id="data-format" class="form-control" name="data_format" required>
                     {% for key, value in data_formats %}
                         <option value="{{ key }}" {% if not form.data_format.value and webresource.data_format == key or form.data_format.value == key %}selected{% endif %}>{{ value }}</option>
                     {% endfor %}
