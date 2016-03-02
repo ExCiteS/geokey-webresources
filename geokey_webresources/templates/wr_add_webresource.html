@@ -45,7 +45,7 @@ data-project-locked="{{ project.islocked }}"
 
             <div class="form-group {% if form.errors.url %}has-error{% endif %}">
                 <label for="name" class="control-label">URL (required)</label>
-                <input type="url" id="url" class="form-control" name="url" value="{{ form.url.value|default_if_none:'' }}" maxlength="250" required />
+                <input type="url" id="url" class="form-control" name="url" placeholder="https://" value="{{ form.url.value|default_if_none:'' }}" maxlength="250" required />
                 {% if form.errors.url %}<span class="help-block">{{ form.errors.url|striptags }}</span>{% endif %}
             </div>
 
