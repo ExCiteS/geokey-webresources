@@ -181,34 +181,34 @@ data-webresource-id="{{ webresource.id }}"
 {% endblock %}
 
 {% block libraries %}
-<script>
-var url = 'projects/' + $('body').attr('data-project-id') + '/webresources/' + $('body').attr('data-webresource-id') + '/';
-var updatename = 'webresource';
+<script type="text/javascript">
+    var url = 'projects/' + $('body').attr('data-project-id') + '/webresources/' + $('body').attr('data-webresource-id') + '/';
+    var updatename = 'webresource';
 </script>
 
 <link rel="stylesheet" href="/static/lib/bootstrap-colorpicker/css/bootstrap-colorpicker.min.css">
-<script src="/static/lib/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js"></script>
+<script type="text/javascript" src="/static/lib/bootstrap-colorpicker/js/bootstrap-colorpicker.min.js"></script>
 
 <link rel="stylesheet" href="/static/lib/bootstrap-fileinput/css/bootstrap-fileinput.min.css">
-<script src="/static/lib/bootstrap-fileinput/js/bootstrap-fileinput.min.js"></script>
+<script type="text/javascript" src="/static/lib/bootstrap-fileinput/js/bootstrap-fileinput.min.js"></script>
 
-<script src="/static/js/admin.control.ajax.js"></script>
-<script src="/static/js/admin.ui.updater.js"></script>
-<script src="/static/js/admin.ui.forms.validate.js"></script>
-<script src="/static/js/admin.ui.fileinput.js"></script>
+<script type="text/javascript" src="/static/js/admin.control.ajax.js"></script>
+<script type="text/javascript" src="/static/js/admin.ui.updater.js"></script>
+<script type="text/javascript" src="/static/js/admin.ui.forms.validate.js"></script>
+<script type="text/javascript" src="/static/js/admin.ui.fileinput.js"></script>
 
-<script>
-// Initialise color picker
-$('#colour').colorpicker({
-    format: 'hex'
-});
-
-// Initialise file upload
-$('input:file').each(function() {
-    Ui.FileInput.init($(this), {
-        showUpload: false,
-        showCancel: false
+<script type="text/javascript">
+    // Initialise color picker
+    $('#colour').colorpicker({
+        format: 'hex'
     });
-});
+
+    // Initialise file upload
+    $('input:file').each(function() {
+        Ui.FileInput.init($(this), {
+            showUpload: false,
+            showCancel: false
+        });
+    });
 </script>
 {% endblock %}
