@@ -125,12 +125,12 @@ The response contains an array of web resources. If the array is empty, then the
 
 *Response status codes:*
 
-==== ========================================================
+==== =========================================================
 Code Reason
-==== ========================================================
-200  The list of projects has been returned successfully.
+==== =========================================================
+200  The list of web resources has been returned successfully.
 404  The project was not found (or user has no access to it).
-==== ========================================================
+==== =========================================================
 
 **Get a single web resource of a project**
 
@@ -166,9 +166,9 @@ webresource_id  Integer A unique identifier for the web resource.
 
 *Response status codes:*
 
-==== ====================================================
+==== ================================================
 Code Reason
-==== ====================================================
-200  The list of projects has been returned successfully.
+==== ================================================
+200  The web resource has been returned successfully.
 404  The project or web resource was not found.
-==== ====================================================
+==== ================================================
