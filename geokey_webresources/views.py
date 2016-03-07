@@ -217,7 +217,6 @@ class SingleWebResourcePage(WebResourceContext, FormView):
     """Single web resource page."""
 
     template_name = 'wr_single_webresource.html'
-    form_class = WebResourceForm
 
     def get_object(self):
         """
@@ -257,7 +256,7 @@ class SingleWebResourcePage(WebResourceContext, FormView):
             **kwargs
         )
 
-    def get_form(self, form_class):
+    def get_form(self, form_class=WebResourceForm):
         """Attach instance object to form data."""
         return form_class(instance=self.get_object(), **self.get_form_kwargs())
 
