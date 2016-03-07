@@ -1507,8 +1507,8 @@ class RemoveWebResourcePageTest(TestCase):
         """
         Test GET with with admin, when project is locked.
 
-        It should inform user that the project is locked and redirect the same
-        web resource.
+        It should inform user that the project is locked and redirect the to
+        same web resource.
         """
         self.project.islocked = True
         self.project.save()
