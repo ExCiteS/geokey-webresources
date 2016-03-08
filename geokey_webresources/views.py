@@ -56,12 +56,12 @@ class IndexPage(LoginRequiredMixin, TemplateView):
 
         filter_to_add = 'without-web-resources-only'
         if filter_for_projects == filter_to_add:
-            projects = projects.filter(webresources__isnull=True)
+            projects = projects.filter(webresources__isnull=True).distinct()
         filters[filter_to_add] = 'Without web resources'
 
         filter_to_add = 'with-web-resources-only'
         if filter_for_projects == filter_to_add:
-            projects = projects.filter(webresources__isnull=False)
+            projects = projects.filter(webresources__isnull=False).distinct()
         filters[filter_to_add] = 'With web resources'
 
         return super(IndexPage, self).get_context_data(
