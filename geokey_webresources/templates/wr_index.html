@@ -55,13 +55,21 @@
                         <p class="meta">Created by {{ project.creator }} {{ project.created_at|timesince }} ago</p>
                     </li>
                 {% empty %}
-                    <li>
-                        <div class="well empty-list">
-                            <p class="lead">We couldn't find any projects you are eligible to manage.</p>
-                            <p>You can create a new project if you want to add web resources to it.</p>
-                            <a href="{% url 'admin:project_create' %}" class="btn btn-success">Create a new project</a>
-                        </div>
-                    </li>
+                    {% if request.GET.filter %}
+                        <li>
+                            <div class="well empty-list">
+                                <p class="lead">We couldn't find any projects matching the selected filter.</p>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li>
+                            <div class="well empty-list">
+                                <p class="lead">We couldn't find any projects you are eligible to manage.</p>
+                                <p>You can create a new project if you want to add web resources to it.</p>
+                                <a href="{% url 'admin:project_create' %}" class="btn btn-success">Create a new project</a>
+                            </div>
+                        </li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </div>
