@@ -40,7 +40,9 @@ class IndexPage(LoginRequiredMixin, TemplateView):
         GET method for the template.
 
         Return the context to render the view. Overwrite the method by adding
-        all projects (where user is an administrator) to the context.
+        all projects (where user is an administrator) and available filters to
+        the context. It optionally filters projects by the filter provided on
+        the URL.
 
         Returns
         -------
@@ -49,8 +51,22 @@ class IndexPage(LoginRequiredMixin, TemplateView):
         """
         projects = Project.objects.filter(admins=self.request.user)
 
+        filters = {}
+        filter_for_projects = self.request.GET.get('filter')
+
+        filter_to_add = 'without-web-resources-only'
+        if filter_for_projects == filter_to_add:
+            projects = projects.filter(webresources__isnull=True)
+        filters[filter_to_add] = 'Without web resources'
+
+        filter_to_add = 'with-web-resources-only'
+        if filter_for_projects == filter_to_add:
+            projects = projects.filter(webresources__isnull=False)
+        filters[filter_to_add] = 'With web resources'
+
         return super(IndexPage, self).get_context_data(
             projects=projects,
+            filters=filters,
             *args,
             **kwargs
         )

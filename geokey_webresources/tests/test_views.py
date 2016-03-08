@@ -54,6 +54,19 @@ class IndexPageTest(TestCase):
         self.request = HttpRequest()
         self.request.method = 'GET'
         self.view = IndexPage.as_view()
+        self.filters = {
+            'without-web-resources-only': 'Without web resources',
+            'with-web-resources-only': 'With web resources'
+        }
+
+        self.user = UserFactory.create()
+
+        self.project_1 = ProjectFactory.create(add_admins=[self.user])
+        self.project_2 = ProjectFactory.create(add_admins=[self.user])
+        self.project_3 = ProjectFactory.create(add_contributors=[self.user])
+        self.project_4 = ProjectFactory.create()
+        WebResourceFactory.create(project=self.project_2)
+        WebResourceFactory.create(project=self.project_3)
 
         setattr(self.request, 'session', 'session')
         messages = FallbackStorage(self.request)
@@ -78,13 +91,9 @@ class IndexPageTest(TestCase):
         It should render the page with all projects, where user is an
         administrator.
         """
-        user = UserFactory.create()
-        projects = [ProjectFactory.create(add_admins=[user])]
+        projects = [self.project_1, self.project_2]
 
-        ProjectFactory.create(add_contributors=[user])
-        ProjectFactory.create()
-
-        self.request.user = user
+        self.request.user = self.user
         response = self.view(self.request).render()
 
         rendered = render_to_string(
@@ -94,7 +103,80 @@ class IndexPageTest(TestCase):
                 'GEOKEY_VERSION': version.get_version(),
                 'user': self.request.user,
                 'messages': get_messages(self.request),
+                'filters': self.filters,
                 'projects': projects
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_with_user_only_without_web_resources(self):
+        """
+        Test GET with with user, but only projects without web resources.
+
+        It should render the page with all projects, where user is an
+        administrator. Those projects must also not have web resources.
+        """
+        projects = [self.project_1]
+
+        self.request.user = self.user
+        self.request.GET['filter'] = 'without-web-resources-only'
+        response = self.view(self.request).render()
+
+        rendered = render_to_string(
+            'wr_index.html',
+            {
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'GEOKEY_VERSION': version.get_version(),
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'filters': self.filters,
+                'projects': projects,
+                'request': {
+                    'GET': {
+                        'filter': self.request.GET.get('filter')
+                    }
+                }
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+    def test_get_with_user_only_with_web_resources(self):
+        """
+        Test GET with with user, but only projects with web resources.
+
+        It should render the page with all projects, where user is an
+        administrator. Those projects must also have web resources.
+        """
+        projects = [self.project_2]
+
+        self.request.user = self.user
+        self.request.GET['filter'] = 'with-web-resources-only'
+        response = self.view(self.request).render()
+
+        rendered = render_to_string(
+            'wr_index.html',
+            {
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'GEOKEY_VERSION': version.get_version(),
+                'user': self.request.user,
+                'messages': get_messages(self.request),
+                'filters': self.filters,
+                'projects': projects,
+                'request': {
+                    'GET': {
+                        'filter': self.request.GET.get('filter')
+                    }
+                }
             }
         )
 
