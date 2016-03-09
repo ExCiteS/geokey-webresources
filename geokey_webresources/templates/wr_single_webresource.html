@@ -35,14 +35,14 @@ data-webresource-id="{{ webresource.id }}"
                 {% if form.errors.description %}<span class="help-block">{{ form.errors.description|striptags }}</span>{% endif %}
             </div>
 
-            <div class="form-group {% if form.errors.data_format %}has-error{% endif %}">
+            <div class="form-group {% if form.errors.dataformat %}has-error{% endif %}">
                 <label for="data-format" class="control-label">Data format (required)</label>
-                <select id="data-format" class="form-control" name="data_format" required>
+                <select id="data-format" class="form-control" name="dataformat" required>
                     {% for key, value in data_formats %}
-                        <option value="{{ key }}" {% if not form.data_format.value and webresource.data_format == key or form.data_format.value == key %}selected{% endif %}>{{ value }}</option>
+                        <option value="{{ key }}" {% if not form.dataformat.value and webresource.dataformat == key or form.dataformat.value == key %}selected{% endif %}>{{ value }}</option>
                     {% endfor %}
                 </select>
-                {% if form.errors.data_format %}<span class="help-block">{{ form.errors.data_format|striptags }}</span>{% endif %}
+                {% if form.errors.dataformat %}<span class="help-block">{{ form.errors.dataformat|striptags }}</span>{% endif %}
             </div>
 
             <div class="form-group {% if form.errors.url %}has-error{% endif %}">

@@ -31,4 +31,4 @@ class WebResourceSerializer(FieldSelectorSerializer):
 
         model = WebResource
         fields = ('id', 'status', 'name', 'description', 'created', 'modified',
-                  'data_format', 'url', 'colour', 'symbol')
+                  'dataformat', 'url', 'colour', 'symbol')

@@ -355,7 +355,7 @@ class AddWebResourcePageTest(TestCase):
         self.data = {
             'name': 'Test Web Resource',
             'description': '',
-            'data_format': 'GeoJSON',
+            'dataformat': 'GeoJSON',
             'url': 'http://big-data.org.uk/test.json',
             'colour': '#000000',
             'symbol': image_helpers.get_image(file_name='test_symbol.png')
@@ -767,7 +767,7 @@ class SingleWebResourcePageTest(TestCase):
         self.data = {
             'name': self.webresource.name,
             'description': self.webresource.description,
-            'data_format': 'KML',
+            'dataformat': 'KML',
             'url': 'http://big-data.org.uk/test.kml',
             'colour': '#000000',
             'symbol': image_helpers.get_image(file_name='test_symbol.png'),
@@ -1007,7 +1007,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
-        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1055,7 +1055,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
-        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1103,7 +1103,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
-        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1141,7 +1141,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.data.get('name'))
         self.assertEqual(reference.description, self.data.get('description'))
-        self.assertEqual(reference.data_format, self.data.get('data_format'))
+        self.assertEqual(reference.dataformat, self.data.get('dataformat'))
         self.assertEqual(reference.url, self.data.get('url'))
         self.assertEqual(reference.colour, self.data.get('colour'))
         self.assertTrue(bool(reference.symbol))
@@ -1187,7 +1187,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.data.get('name'))
         self.assertEqual(reference.description, self.data.get('description'))
-        self.assertEqual(reference.data_format, self.data.get('data_format'))
+        self.assertEqual(reference.dataformat, self.data.get('dataformat'))
         self.assertEqual(reference.url, self.data.get('url'))
         self.assertEqual(reference.colour, self.data.get('colour'))
         self.assertFalse(bool(reference.symbol))
@@ -1201,7 +1201,7 @@ class SingleWebResourcePageTest(TestCase):
         It should inform user that data is wrong.
         """
         self.data['name'] = ''
-        self.data['data_format'] = 'CSV'
+        self.data['dataformat'] = 'CSV'
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -1240,7 +1240,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
-        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1287,7 +1287,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
-        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1334,7 +1334,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
-        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1386,7 +1386,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
-        self.assertEqual(reference.data_format, self.webresource.data_format)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))

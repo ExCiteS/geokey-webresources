@@ -16,7 +16,7 @@ class WebResourceFactory(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'Web Resource %s' % n)
     description = factory.LazyAttribute(lambda o: '%s description.' % o.name)
-    data_format = 'GeoJSON'
+    dataformat = 'GeoJSON'
     url = factory.Sequence(lambda n: 'https://domain.com/%d.json' % n)
 
     project = factory.SubFactory(ProjectFactory)

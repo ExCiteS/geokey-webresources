@@ -12,5 +12,5 @@ class WebResourceForm(ModelForm):
         """Form meta."""
 
         model = WebResource
-        fields = ('name', 'description', 'data_format', 'url', 'colour',
+        fields = ('name', 'description', 'dataformat', 'url', 'colour',
                   'symbol')

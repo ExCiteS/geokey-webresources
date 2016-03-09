@@ -20,7 +20,7 @@ class WebResource(StatusModel, TimeStampedModel):
 
     name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
-    data_format = models.CharField(max_length=10, null=False, choices=FORMAT)
+    dataformat = models.CharField(max_length=10, null=False, choices=FORMAT)
     url = models.URLField(max_length=250)
     order = models.IntegerField(default=0)
     colour = models.TextField(default='#0033ff')
