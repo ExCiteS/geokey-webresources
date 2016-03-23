@@ -116,7 +116,7 @@ The response contains an array of web resources. If the array is empty, then the
             "description": "All public houses in London.",
             "created": "2014-09-19T15:51:32.790Z",
             "modified": "2014-09-21T15:51:32.804Z",
-            "data_format": "KML",
+            "dataformat": "KML",
             "url": "http://london.co.uk/public-houses.kml",
             "colour": "#000000",
             "symbol": null
@@ -158,7 +158,7 @@ webresource_id  Integer A unique identifier for the web resource.
         "description": "Train stations in Germany.",
         "created": "2015-09-15T09:40:01.747Z",
         "modified": "2016-01-10T07:12:01.827Z",
-        "data_format": "GeoJSON",
+        "dataformat": "GeoJSON",
         "url": "https://germany.de/all-train-stations.geojson",
         "colour": "#ffc0cb",
         "symbol": '/media/webresources/symbols/train_stations.png'
