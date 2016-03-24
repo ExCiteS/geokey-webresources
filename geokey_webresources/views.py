@@ -20,7 +20,9 @@ from geokey.projects.models import Project
 from geokey.projects.views import ProjectContext
 
 from .helpers.context_helpers import does_not_exist_msg
-from .base import STATUS, FORMAT
+from .helpers.url_helpers import check_url
+from .base import STATUS
+from .exceptions import URLError
 from .models import WebResource
 from .forms import WebResourceForm
 from .serializers import WebResourceSerializer
@@ -89,7 +91,7 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
         GET method for the template.
 
         Return the context to render the view. Overwrite the method by adding
-        project ID and available data formats to the context.
+        project ID to the context.
 
         Returns
         -------
@@ -100,7 +102,6 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
 
         return super(AddWebResourcePage, self).get_context_data(
             project_id,
-            data_formats=FORMAT,
             *args,
             **kwargs
         )
@@ -132,20 +133,25 @@ class AddWebResourcePage(LoginRequiredMixin, ProjectContext, CreateView):
                 form.instance.project = project
                 form.instance.creator = self.request.user
 
-                add_another_url = reverse(
-                    'geokey_webresources:webresource_add',
-                    kwargs={
-                        'project_id': project.id
-                    }
-                )
-                messages.success(
-                    self.request,
-                    mark_safe(
-                        'The web resource has been added. <a href="%s">Add '
-                        'another web resource.</a>' % add_another_url
+                try:
+                    form.instance.dataformat = check_url(form.instance.url)
+
+                    add_another_url = reverse(
+                        'geokey_webresources:webresource_add',
+                        kwargs={
+                            'project_id': project.id
+                        }
                     )
-                )
-                return super(AddWebResourcePage, self).form_valid(form)
+                    messages.success(
+                        self.request,
+                        mark_safe(
+                            'The web resource has been added. <a href="%s">'
+                            'Add another web resource.</a>' % add_another_url
+                        )
+                    )
+                    return super(AddWebResourcePage, self).form_valid(form)
+                except URLError, error:
+                    messages.error(self.request, error.to_html())
 
         return self.render_to_response(context)
 
@@ -191,8 +197,7 @@ class WebResourceContext(LoginRequiredMixin, ProjectContext):
         GET method for the template.
 
         Return the context to render the view. Overwrite the method by adding
-        a web resource and available status types & data formats to the
-        context.
+        a web resource and available status types to the context.
 
         Parameters
         ----------
@@ -213,7 +218,6 @@ class WebResourceContext(LoginRequiredMixin, ProjectContext):
         )
 
         context['status_types'] = STATUS
-        context['data_formats'] = FORMAT
 
         try:
             context['webresource'] = WebResource.objects.get(
@@ -300,15 +304,20 @@ class SingleWebResourcePage(WebResourceContext, FormView):
                     'The project is locked. Web resources cannot be updated.'
                 )
             else:
-                if self.request.POST.get('symbol_clear') == 'true':
-                    form.instance.symbol = None
-                form.save()
+                try:
+                    form.instance.dataformat = check_url(form.instance.url)
 
-                messages.success(
-                    self.request,
-                    mark_safe('The web resource has been updated.')
-                )
-                return super(SingleWebResourcePage, self).form_valid(form)
+                    if self.request.POST.get('symbol_clear') == 'true':
+                        form.instance.symbol = None
+                    form.save()
+
+                    messages.success(
+                        self.request,
+                        mark_safe('The web resource has been updated.')
+                    )
+                    return super(SingleWebResourcePage, self).form_valid(form)
+                except URLError, error:
+                    messages.error(self.request, error.to_html())
 
         return self.render_to_response(context)
 
