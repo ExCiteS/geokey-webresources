@@ -5,11 +5,13 @@ import urllib2
 from StringIO import StringIO
 
 
-def mock_responses(request, code, msg):
+def mock_responses(request, code, msg, cors):
     """Mock responses."""
     response = urllib2.addinfourl(
         StringIO('mock file'),
-        'mock message',
+        {
+            'Access-Control-Allow-Origin': cors
+        },
         request.get_full_url()
     )
     response.code = code
@@ -22,7 +24,15 @@ class ValidURLHTTPHandler(urllib2.HTTPHandler):
 
     def http_open(self, request):
         """Mock response."""
-        return mock_responses(request, 200, 'OK')
+        return mock_responses(request, 200, 'OK', '*')
+
+
+class NoCORSHTTPHandler(urllib2.HTTPHandler):
+    """Custom HTTP handler for no CORS."""
+
+    def http_open(self, request):
+        """Mock response."""
+        return mock_responses(request, 200, 'OK', None)
 
 
 class InvalidURLHTTPHandler(urllib2.HTTPHandler):
@@ -30,4 +40,4 @@ class InvalidURLHTTPHandler(urllib2.HTTPHandler):
 
     def http_open(self, request):
         """Mock response."""
-        return mock_responses(request, 404, 'NOT FOUND')
+        return mock_responses(request, 404, 'NOT FOUND', '*')
