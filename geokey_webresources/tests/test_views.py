@@ -2,6 +2,7 @@
 
 import os
 import json
+import urllib2
 
 from django.core.urlresolvers import reverse
 from django.http import HttpRequest
@@ -19,6 +20,7 @@ from geokey.core.tests.helpers import render_helpers, image_helpers
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.tests.model_factories import ProjectFactory
 
+from .url_mocks import ValidURLHTTPHandler, InvalidURLHTTPHandler
 from .model_factories import WebResourceFactory
 from ..helpers.context_helpers import does_not_exist_msg
 from ..base import STATUS, FORMAT
@@ -355,8 +357,7 @@ class AddWebResourcePageTest(TestCase):
         self.data = {
             'name': 'Test Web Resource',
             'description': '',
-            'dataformat': 'GeoJSON',
-            'url': 'http://big-data.org.uk/test.json',
+            'url': 'http://source.org.uk/test.json',
             'colour': '#000000',
             'symbol': image_helpers.get_image(file_name='test_symbol.png')
         }
@@ -468,7 +469,6 @@ class AddWebResourcePageTest(TestCase):
                 'user': self.request.user,
                 'messages': get_messages(self.request),
                 'form': form,
-                'data_formats': FORMAT,
                 'project': self.project
             }
         )
@@ -518,6 +518,7 @@ class AddWebResourcePageTest(TestCase):
 
         It should redirect to login page.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = AnonymousUser()
 
@@ -537,6 +538,7 @@ class AddWebResourcePageTest(TestCase):
         It should not allow to add new web resources, when user is not an
         administrator.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = self.user
 
@@ -574,6 +576,7 @@ class AddWebResourcePageTest(TestCase):
         It should not allow to add new web resources, when user is not an
         administrator.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = self.contributor
 
@@ -604,12 +607,14 @@ class AddWebResourcePageTest(TestCase):
         )
         self.assertEqual(WebResource.objects.count(), 0)
 
-    def test_post_with_admin(self):
+    def test_post_with_admin_geojson(self):
         """
-        Test POST with with admin.
+        Test POST with with admin (GeoJSON).
 
         It should add new web resource, when user is an administrator.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.json'
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -630,6 +635,80 @@ class AddWebResourcePageTest(TestCase):
             response['location']
         )
         self.assertEqual(WebResource.objects.count(), 1)
+        self.assertEqual(
+            WebResource.objects.latest('id').dataformat,
+            FORMAT.GeoJSON
+        )
+
+    def test_post_with_admin_kml(self):
+        """
+        Test POST with with admin (KML).
+
+        It should add new web resource, when user is an administrator.
+        """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.kml'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:all_webresources',
+                kwargs={
+                    'project_id': self.project.id
+                }
+            ),
+            response['location']
+        )
+        self.assertEqual(WebResource.objects.count(), 1)
+        self.assertEqual(
+            WebResource.objects.latest('id').dataformat,
+            FORMAT.KML
+        )
+
+    def test_post_when_invalid_format(self):
+        """
+        Test POST with with admin, when format is invalid.
+
+        It should add new web resource, when user is an administrator.
+        """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.png'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'project': self.project
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
 
     def test_post_when_wrong_data(self):
         """
@@ -637,6 +716,7 @@ class AddWebResourcePageTest(TestCase):
 
         It should inform user that data is wrong.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         self.data['url'] = 'some web address'
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
@@ -656,7 +736,42 @@ class AddWebResourcePageTest(TestCase):
                 'user': request.user,
                 'messages': get_messages(request),
                 'form': form,
-                'data_formats': FORMAT,
+                'project': self.project
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
+    def test_post_when_invalid_url(self):
+        """
+        Test POST with with admin, when URL is invalid.
+
+        It should inform user that URL is invalid.
+        """
+        urllib2.install_opener(urllib2.build_opener(InvalidURLHTTPHandler))
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
                 'project': self.project
             }
         )
@@ -674,6 +789,7 @@ class AddWebResourcePageTest(TestCase):
 
         It should inform user that project does not exist.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -712,6 +828,7 @@ class AddWebResourcePageTest(TestCase):
 
         It should inform user that the project is locked.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         self.project.islocked = True
         self.project.save()
 
@@ -733,7 +850,6 @@ class AddWebResourcePageTest(TestCase):
                 'user': request.user,
                 'messages': get_messages(request),
                 'form': form,
-                'data_formats': FORMAT,
                 'project': self.project
             }
         )
@@ -767,7 +883,6 @@ class SingleWebResourcePageTest(TestCase):
         self.data = {
             'name': self.webresource.name,
             'description': self.webresource.description,
-            'dataformat': 'KML',
             'url': 'http://big-data.org.uk/test.kml',
             'colour': '#000000',
             'symbol': image_helpers.get_image(file_name='test_symbol.png'),
@@ -902,7 +1017,6 @@ class SingleWebResourcePageTest(TestCase):
                 'messages': get_messages(self.request),
                 'form': form,
                 'status_types': STATUS,
-                'data_formats': FORMAT,
                 'project': self.project,
                 'webresource': self.webresource
             }
@@ -988,6 +1102,7 @@ class SingleWebResourcePageTest(TestCase):
 
         It should redirect to login page.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = AnonymousUser()
 
@@ -1019,6 +1134,7 @@ class SingleWebResourcePageTest(TestCase):
         It should not allow to update web resources, when user is not an
         administrator.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = self.user
 
@@ -1067,6 +1183,7 @@ class SingleWebResourcePageTest(TestCase):
         It should not allow to update web resources, when user is not an
         administrator.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = self.contributor
 
@@ -1108,12 +1225,14 @@ class SingleWebResourcePageTest(TestCase):
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
 
-    def test_post_with_admin(self):
+    def test_post_with_admin_geojson(self):
         """
-        Test POST with with admin.
+        Test POST with with admin (GeoJSON).
 
         It should update web resource, when user is an administrator.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.json'
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -1141,10 +1260,100 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.data.get('name'))
         self.assertEqual(reference.description, self.data.get('description'))
-        self.assertEqual(reference.dataformat, self.data.get('dataformat'))
+        self.assertEqual(reference.dataformat, FORMAT.GeoJSON)
         self.assertEqual(reference.url, self.data.get('url'))
         self.assertEqual(reference.colour, self.data.get('colour'))
         self.assertTrue(bool(reference.symbol))
+
+    def test_post_with_admin_kml(self):
+        """
+        Test POST with with admin (KML).
+
+        It should update web resource, when user is an administrator.
+        """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.kml'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:all_webresources',
+                kwargs={
+                    'project_id': self.project.id
+                }
+            ),
+            response['location']
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.data.get('name'))
+        self.assertEqual(reference.description, self.data.get('description'))
+        self.assertEqual(reference.dataformat, FORMAT.KML)
+        self.assertEqual(reference.url, self.data.get('url'))
+        self.assertEqual(reference.colour, self.data.get('colour'))
+        self.assertTrue(bool(reference.symbol))
+
+    def test_post_when_invalid_format(self):
+        """
+        Test POST with with admin, when format is invalid.
+
+        It should inform user that URL is invalid.
+        """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.png'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'status_types': STATUS,
+                'project': self.project,
+                'webresource': self.webresource
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
 
     def test_post_when_clearing_symbol(self):
         """
@@ -1152,6 +1361,7 @@ class SingleWebResourcePageTest(TestCase):
 
         It should clear symbol from web resource.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         self.webresource.symbol = image_helpers.get_image(
             file_name='test_symbol.png'
         )
@@ -1187,7 +1397,6 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.data.get('name'))
         self.assertEqual(reference.description, self.data.get('description'))
-        self.assertEqual(reference.dataformat, self.data.get('dataformat'))
         self.assertEqual(reference.url, self.data.get('url'))
         self.assertEqual(reference.colour, self.data.get('colour'))
         self.assertFalse(bool(reference.symbol))
@@ -1200,8 +1409,8 @@ class SingleWebResourcePageTest(TestCase):
 
         It should inform user that data is wrong.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         self.data['name'] = ''
-        self.data['dataformat'] = 'CSV'
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -1225,7 +1434,55 @@ class SingleWebResourcePageTest(TestCase):
                 'messages': get_messages(request),
                 'form': form,
                 'status_types': STATUS,
-                'data_formats': FORMAT,
+                'project': self.project,
+                'webresource': self.webresource
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
+
+    def test_post_when_invalid_url(self):
+        """
+        Test POST with with admin, when URL is invalid.
+
+        It should inform user that URL is invalid.
+        """
+        urllib2.install_opener(urllib2.build_opener(InvalidURLHTTPHandler))
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'status_types': STATUS,
                 'project': self.project,
                 'webresource': self.webresource
             }
@@ -1251,6 +1508,7 @@ class SingleWebResourcePageTest(TestCase):
 
         It should inform user that web resource does not exist.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -1298,6 +1556,7 @@ class SingleWebResourcePageTest(TestCase):
 
         It should inform user that web resource does not exist.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -1345,6 +1604,7 @@ class SingleWebResourcePageTest(TestCase):
 
         It should inform user that the project is locked.
         """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         self.project.islocked = True
         self.project.save()
 
@@ -1371,7 +1631,6 @@ class SingleWebResourcePageTest(TestCase):
                 'messages': get_messages(request),
                 'form': form,
                 'status_types': STATUS,
-                'data_formats': FORMAT,
                 'project': self.project,
                 'webresource': self.webresource
             }
