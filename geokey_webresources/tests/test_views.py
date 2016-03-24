@@ -20,7 +20,11 @@ from geokey.core.tests.helpers import render_helpers, image_helpers
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.tests.model_factories import ProjectFactory
 
-from .url_mocks import ValidURLHTTPHandler, InvalidURLHTTPHandler
+from .url_mocks import (
+    ValidURLHTTPHandler,
+    NoCORSHTTPHandler,
+    InvalidURLHTTPHandler
+)
 from .model_factories import WebResourceFactory
 from ..helpers.context_helpers import does_not_exist_msg
 from ..base import STATUS, FORMAT
@@ -747,6 +751,42 @@ class AddWebResourcePageTest(TestCase):
         )
         self.assertEqual(WebResource.objects.count(), 0)
 
+    def test_post_when_no_cors_support(self):
+        """
+        Test POST with with admin, when server has no CORS enabled.
+
+        It should inform user that server has no CORS enabled.
+        """
+        urllib2.install_opener(urllib2.build_opener(NoCORSHTTPHandler))
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'project': self.project
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
+
     def test_post_when_invalid_url(self):
         """
         Test POST with with admin, when URL is invalid.
@@ -1411,6 +1451,55 @@ class SingleWebResourcePageTest(TestCase):
         """
         urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
         self.data['name'] = ''
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'status_types': STATUS,
+                'project': self.project,
+                'webresource': self.webresource
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
+
+    def test_post_when_no_cors_support(self):
+        """
+        Test POST with with admin, when server has no CORS enabled.
+
+        It should inform user that server has no CORS enabled.
+        """
+        urllib2.install_opener(urllib2.build_opener(NoCORSHTTPHandler))
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
