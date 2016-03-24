@@ -45,8 +45,6 @@ def check_url(url):
             dataformat = FORMAT.GeoJSON
         elif content_type == 'application/vnd.google-earth.kml+xml':
             dataformat = FORMAT.KML
-        elif content_type == 'application/gpx+xml':
-            dataformat = FORMAT.GPX
         else:
             errors.append(
                 'Data format `%s` is currently not supported.' % content_type

@@ -4,4 +4,4 @@ from model_utils import Choices
 
 
 STATUS = Choices('active', 'inactive', 'deleted')
-FORMAT = Choices('GeoJSON', 'KML', 'GPX')
+FORMAT = Choices('GeoJSON', 'KML')

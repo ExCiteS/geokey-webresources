@@ -13,7 +13,7 @@
 geokey-webresources
 ===================
 
-Extend GeoKey projects by adding web resources: GeoJSON, KML or GPX.
+Extend GeoKey projects by adding web resources: GeoJSON and KML.
 
 Install
 -------

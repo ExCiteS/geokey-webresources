@@ -23,7 +23,7 @@ from geokey.projects.tests.model_factories import ProjectFactory
 from .url_mocks import ValidURLHTTPHandler, InvalidURLHTTPHandler
 from .model_factories import WebResourceFactory
 from ..helpers.context_helpers import does_not_exist_msg
-from ..base import STATUS
+from ..base import STATUS, FORMAT
 from ..models import WebResource
 from ..forms import WebResourceForm
 from ..views import (
@@ -357,7 +357,7 @@ class AddWebResourcePageTest(TestCase):
         self.data = {
             'name': 'Test Web Resource',
             'description': '',
-            'url': 'http://big-data.org.uk/test.json',
+            'url': 'http://source.org.uk/test.json',
             'colour': '#000000',
             'symbol': image_helpers.get_image(file_name='test_symbol.png')
         }
@@ -607,13 +607,14 @@ class AddWebResourcePageTest(TestCase):
         )
         self.assertEqual(WebResource.objects.count(), 0)
 
-    def test_post_with_admin(self):
+    def test_post_with_admin_geojson(self):
         """
-        Test POST with with admin.
+        Test POST with with admin (GeoJSON).
 
         It should add new web resource, when user is an administrator.
         """
         urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.json'
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -634,6 +635,80 @@ class AddWebResourcePageTest(TestCase):
             response['location']
         )
         self.assertEqual(WebResource.objects.count(), 1)
+        self.assertEqual(
+            WebResource.objects.latest('id').dataformat,
+            FORMAT.GeoJSON
+        )
+
+    def test_post_with_admin_kml(self):
+        """
+        Test POST with with admin (KML).
+
+        It should add new web resource, when user is an administrator.
+        """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.kml'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:all_webresources',
+                kwargs={
+                    'project_id': self.project.id
+                }
+            ),
+            response['location']
+        )
+        self.assertEqual(WebResource.objects.count(), 1)
+        self.assertEqual(
+            WebResource.objects.latest('id').dataformat,
+            FORMAT.KML
+        )
+
+    def test_post_when_invalid_format(self):
+        """
+        Test POST with with admin, when format is invalid.
+
+        It should add new web resource, when user is an administrator.
+        """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.png'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(request, project_id=self.project.id).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_add_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'project': self.project
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+        self.assertEqual(WebResource.objects.count(), 0)
 
     def test_post_when_wrong_data(self):
         """
@@ -1047,6 +1122,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1095,6 +1171,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1143,17 +1220,19 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
 
-    def test_post_with_admin(self):
+    def test_post_with_admin_geojson(self):
         """
-        Test POST with with admin.
+        Test POST with with admin (GeoJSON).
 
         It should update web resource, when user is an administrator.
         """
         urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.json'
         request = self.factory.post(self.url, self.data)
         request.user = self.admin
 
@@ -1181,9 +1260,100 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.data.get('name'))
         self.assertEqual(reference.description, self.data.get('description'))
+        self.assertEqual(reference.dataformat, FORMAT.GeoJSON)
         self.assertEqual(reference.url, self.data.get('url'))
         self.assertEqual(reference.colour, self.data.get('colour'))
         self.assertTrue(bool(reference.symbol))
+
+    def test_post_with_admin_kml(self):
+        """
+        Test POST with with admin (KML).
+
+        It should update web resource, when user is an administrator.
+        """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.kml'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(
+            reverse(
+                'geokey_webresources:all_webresources',
+                kwargs={
+                    'project_id': self.project.id
+                }
+            ),
+            response['location']
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.data.get('name'))
+        self.assertEqual(reference.description, self.data.get('description'))
+        self.assertEqual(reference.dataformat, FORMAT.KML)
+        self.assertEqual(reference.url, self.data.get('url'))
+        self.assertEqual(reference.colour, self.data.get('colour'))
+        self.assertTrue(bool(reference.symbol))
+
+    def test_post_when_invalid_format(self):
+        """
+        Test POST with with admin, when format is invalid.
+
+        It should inform user that URL is invalid.
+        """
+        urllib2.install_opener(urllib2.build_opener(ValidURLHTTPHandler))
+        self.data['url'] = 'http://source.org.uk/test.png'
+        request = self.factory.post(self.url, self.data)
+        request.user = self.admin
+
+        setattr(request, 'session', 'session')
+        messages = FallbackStorage(request)
+        setattr(request, '_messages', messages)
+
+        response = self.view(
+            request,
+            project_id=self.project.id,
+            webresource_id=self.webresource.id
+        ).render()
+
+        form = WebResourceForm(data=self.data)
+        rendered = render_to_string(
+            'wr_single_webresource.html',
+            {
+                'GEOKEY_VERSION': version.get_version(),
+                'PLATFORM_NAME': get_current_site(request).name,
+                'user': request.user,
+                'messages': get_messages(request),
+                'form': form,
+                'status_types': STATUS,
+                'project': self.project,
+                'webresource': self.webresource
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            render_helpers.remove_csrf(response.content.decode('utf-8')),
+            rendered
+        )
+
+        reference = WebResource.objects.get(pk=self.webresource.id)
+        self.assertEqual(reference.name, self.webresource.name)
+        self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
+        self.assertEqual(reference.url, self.webresource.url)
+        self.assertEqual(reference.colour, self.webresource.colour)
+        self.assertFalse(bool(reference.symbol))
 
     def test_post_when_clearing_symbol(self):
         """
@@ -1278,6 +1448,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1326,6 +1497,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1373,6 +1545,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1420,6 +1593,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
@@ -1471,6 +1645,7 @@ class SingleWebResourcePageTest(TestCase):
         reference = WebResource.objects.get(pk=self.webresource.id)
         self.assertEqual(reference.name, self.webresource.name)
         self.assertEqual(reference.description, self.webresource.description)
+        self.assertEqual(reference.dataformat, self.webresource.dataformat)
         self.assertEqual(reference.url, self.webresource.url)
         self.assertEqual(reference.colour, self.webresource.colour)
         self.assertFalse(bool(reference.symbol))
