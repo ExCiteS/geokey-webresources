@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from django.core.urlresolvers import reverse
 from django.views.generic import CreateView, FormView, TemplateView
 from django.shortcuts import redirect
+from django.db.models import BooleanField, Q, Case, When
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 
@@ -51,19 +52,29 @@ class IndexPage(LoginRequiredMixin, TemplateView):
         dict
             Context.
         """
-        projects = Project.objects.filter(admins=self.request.user)
+        projects = Project.objects.filter(admins=self.request.user).annotate(
+            with_webresources=Case(
+                When(
+                    ~Q(webresources__status='deleted') &
+                    Q(webresources__isnull=False),
+                    then=True
+                ),
+                default=False,
+                output_field=BooleanField()
+            )
+        ).distinct()
 
         filters = {}
         filter_for_projects = self.request.GET.get('filter')
 
         filter_to_add = 'without-web-resources-only'
         if filter_for_projects == filter_to_add:
-            projects = projects.filter(webresources__isnull=True).distinct()
+            projects = projects.filter(with_webresources=False)
         filters[filter_to_add] = 'Without web resources'
 
         filter_to_add = 'with-web-resources-only'
         if filter_for_projects == filter_to_add:
-            projects = projects.filter(webresources__isnull=False).distinct()
+            projects = projects.filter(with_webresources=True)
         filters[filter_to_add] = 'With web resources'
 
         return super(IndexPage, self).get_context_data(
