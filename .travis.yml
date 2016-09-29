@@ -1,13 +1,17 @@
+dist: trusty
 language: python
-
-python:
-  - '2.7'
 
 services:
   - postgresql
 
+python:
+  - '2.7'
+
 addons:
   postgresql: '9.4'
+  apt:
+    packages:
+      - postgresql-9.4-postgis-2.2
 
 env:
   - GEOKEY='>=0.9,<0.10' DJANGO='>=1.8,<1.9'
@@ -23,17 +27,19 @@ virtualenv:
   system_site_packages: true
 
 install:
-  - sudo rm /etc/apt/sources.list.d/ubuntugis-stable-source.list
-  - sudo apt-get update -y
-  - sudo apt-get install python-gdal gdal-bin binutils libav-tools libavcodec-extra-53
+  - sudo add-apt-repository ppa:ubuntugis/ppa -y
+  - sudo -E apt-get -yq update &>> ~/apt-get-update.log
+  - sudo apt-get install binutils libav-tools
+  - sudo apt-get -yq install libgdal1-dev gdal-bin python-gdal
+  - gdal-config --version
   - export C_INCLUDE_PATH=/usr/include/gdal
   - export CPLUS_INCLUDE_PATH=/usr/include/gdal
-  - pip install --upgrade pip
 
 before_script:
   - psql template1 postgres -c 'create extension hstore;'
   - psql -c 'create database geokey;' -U postgres
   - psql -U postgres -d geokey -c 'create extension postgis;'
+  - pip install --upgrade pip
   - pip install geokey$GEOKEY
   - pip install django$DJANGO
   - python -c "import django; print('DJANGO %s ' % django.get_version())"
@@ -52,7 +58,7 @@ deploy:
   provider: pypi
   user: excites
   password:
-    secure: YF+k347oHpj8LraU2txBo39ksza2DxX6MoJvEMImF6o6ChPVm3A08LE/XKEY1H60cmItSAMamuIGmH79PK8UVE8YDVrYqMtrCmR7obi75z4rQd4rMmLBllDbPShUTjVyrqu9Ud3ldrjMo5pf+YY/LifJAvoMbYWr0DAGgwMVKO2VDJAArYxVGl/iowCPiogxV8Vj/OzGvuagTsZZGzVoY9eT5wHiPWNNT9pxXLmRDG6QT71di03G1bQft55WEHf4ilwezSedXnHV4Jbc6WqFz27mivjx/ElNrpJq93Fac5qNhE1UiBJNC52INfTLoF+/zdVwdvKmxbb2XFaIH4KEUp816V/ZkBQoAdm6UgQNyH1M+dW7XUxw5hTR0R1gHZs7UUCPYK77YJ45W/uSdGzTG3M0as44+cFHf84dGHYTRZwO03SAvU5oBzLtJYTK9dFRb5S1Mywd0eI/gLjHW9ZAmEAkL7laQ+7ewT1e8s7qvq3pbFanH85LSWxTzfaLy1wVi0RJL1ENUFAq5hx8cBK1tnAJNSS3aibxmgj1zE8NCbLQcLn+1OPS0JM12HsG/ioJZKQcGHhwkMQkRwQF0Bdxq8zd3ARNZFm/gmAx2WiyCyWPuEwNaX4AGXa3ktKheq8q5UstycF4vcdNwiHaRAtpKfc171FtSz4VTgWbptzH1yo=
+  secure: YF+k347oHpj8LraU2txBo39ksza2DxX6MoJvEMImF6o6ChPVm3A08LE/XKEY1H60cmItSAMamuIGmH79PK8UVE8YDVrYqMtrCmR7obi75z4rQd4rMmLBllDbPShUTjVyrqu9Ud3ldrjMo5pf+YY/LifJAvoMbYWr0DAGgwMVKO2VDJAArYxVGl/iowCPiogxV8Vj/OzGvuagTsZZGzVoY9eT5wHiPWNNT9pxXLmRDG6QT71di03G1bQft55WEHf4ilwezSedXnHV4Jbc6WqFz27mivjx/ElNrpJq93Fac5qNhE1UiBJNC52INfTLoF+/zdVwdvKmxbb2XFaIH4KEUp816V/ZkBQoAdm6UgQNyH1M+dW7XUxw5hTR0R1gHZs7UUCPYK77YJ45W/uSdGzTG3M0as44+cFHf84dGHYTRZwO03SAvU5oBzLtJYTK9dFRb5S1Mywd0eI/gLjHW9ZAmEAkL7laQ+7ewT1e8s7qvq3pbFanH85LSWxTzfaLy1wVi0RJL1ENUFAq5hx8cBK1tnAJNSS3aibxmgj1zE8NCbLQcLn+1OPS0JM12HsG/ioJZKQcGHhwkMQkRwQF0Bdxq8zd3ARNZFm/gmAx2WiyCyWPuEwNaX4AGXa3ktKheq8q5UstycF4vcdNwiHaRAtpKfc171FtSz4VTgWbptzH1yo=
   on:
     tags: true
     branch: master
