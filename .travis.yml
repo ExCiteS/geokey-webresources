@@ -47,7 +47,7 @@ before_script:
   - python travis_ci/manage.py migrate
 
 script:
-  - coverage run --source=geokey_webresources travis/manage.py test geokey_webresources
+  - coverage run --source=geokey_webresources travis_ci/manage.py test geokey_webresources
 
 after_success:
   - coveralls
