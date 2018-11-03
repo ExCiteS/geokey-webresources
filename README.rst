@@ -21,7 +21,7 @@ Install
 geokey-webresources requires:
 
 - Python version 2.7
-- GeoKey version 1.7 or greater
+- GeoKey version 1.6 or greater
 
 Install the geokey-webresources from PyPI:
 
